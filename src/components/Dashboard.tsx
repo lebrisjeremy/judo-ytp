@@ -511,8 +511,8 @@ export function Dashboard({ onOpenPlan }: Props) {
                       {newPlanFor === athlete.id ? (
                         <NewPlanForm
                           hasEvents={refs.length > 0}
-                          onSave={(title, startDate, autoGenerate) => {
-                            const id = createPlan(athlete.id, title, startDate, autoGenerate)
+                          onSave={async (title, startDate, autoGenerate) => {
+                            const id = await createPlan(athlete.id, title, startDate, autoGenerate)
                             setNewPlanFor(null)
                             onOpenPlan(id)
                           }}

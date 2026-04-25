@@ -1,89 +1,135 @@
 import { create } from 'zustand'
+import type { User } from '@supabase/supabase-js'
 import type { Athlete, YearlyPlan, Week, GlobalEvent } from '../types'
 import { resolveAthleteEvents } from '../types'
-import { storage } from '../storage'
 import { generateWeeks, computePlanLength } from '../lib/dates'
 import { autoGenerateWeeks } from '../lib/autoplan'
 import { format } from 'date-fns'
+import { supabase } from '../lib/supabase'
+
+// ---------------------------------------------------------------------------
+// Supabase helpers
+// ---------------------------------------------------------------------------
+
+async function fetchAthletes(userId: string): Promise<Athlete[]> {
+  const { data } = await supabase.from('athletes').select('data').eq('user_id', userId)
+  return (data ?? []).map(r => r.data as Athlete)
+}
+async function fetchPlans(userId: string): Promise<YearlyPlan[]> {
+  const { data } = await supabase.from('yearly_plans').select('data').eq('user_id', userId)
+  return (data ?? []).map(r => r.data as YearlyPlan)
+}
+async function fetchGlobalEvents(userId: string): Promise<GlobalEvent[]> {
+  const { data } = await supabase.from('global_events').select('data').eq('user_id', userId)
+  return (data ?? []).map(r => r.data as GlobalEvent)
+}
+
+// ---------------------------------------------------------------------------
+// Store interface
+// ---------------------------------------------------------------------------
 
 interface PlanStore {
+  user: User | null
+  loading: boolean
   athletes: Athlete[]
   plans: YearlyPlan[]
   globalEvents: GlobalEvent[]
   activePlanId: string | null
 
-  loadAll: () => void
-  saveAthlete: (a: Athlete) => void
-  deleteAthlete: (id: string) => void
-  saveGlobalEvent: (event: GlobalEvent) => void
-  deleteGlobalEvent: (id: string) => void
+  init: () => void
+  setUser: (user: User | null) => void
+  loadAll: (userId: string) => Promise<void>
 
-  createPlan: (athleteId: string, title: string, startDate: string, autoGenerate?: boolean) => string
-  regeneratePlan: (planId: string) => void
-  deletePlan: (id: string) => void
+  saveAthlete: (a: Athlete) => Promise<void>
+  deleteAthlete: (id: string) => Promise<void>
+  saveGlobalEvent: (event: GlobalEvent) => Promise<void>
+  deleteGlobalEvent: (id: string) => Promise<void>
+
+  createPlan: (athleteId: string, title: string, startDate: string, autoGenerate?: boolean) => Promise<string>
+  regeneratePlan: (planId: string) => Promise<void>
+  deletePlan: (id: string) => Promise<void>
   setActivePlan: (id: string | null) => void
-  updateWeek: (planId: string, weekNumber: number, patch: Partial<Week>) => void
-  updatePlanMode: (planId: string, mode: 'simple' | 'detailed') => void
-  updatePlanMeta: (planId: string, patch: Partial<Pick<YearlyPlan, 'title' | 'notes'>>) => void
-  importAthlete: (athlete: Athlete, plans: YearlyPlan[], newGlobalEvents: GlobalEvent[]) => void
+  updateWeek: (planId: string, weekNumber: number, patch: Partial<Week>) => Promise<void>
+  updatePlanMode: (planId: string, mode: 'simple' | 'detailed') => Promise<void>
+  updatePlanMeta: (planId: string, patch: Partial<Pick<YearlyPlan, 'title' | 'notes'>>) => Promise<void>
+  importAthlete: (athlete: Athlete, plans: YearlyPlan[], newGlobalEvents: GlobalEvent[]) => Promise<void>
 }
 
+// ---------------------------------------------------------------------------
+// Store implementation
+// ---------------------------------------------------------------------------
+
 export const usePlanStore = create<PlanStore>((set, get) => ({
+  user: null,
+  loading: true,
   athletes: [],
   plans: [],
   globalEvents: [],
   activePlanId: null,
 
-  loadAll() {
-    let athletes = storage.getAthletes()
-    let globalEvents = storage.getGlobalEvents()
-
-    // One-time migration: move legacy athlete.events → GlobalEvent + AthleteEventRef
-    athletes = athletes.map(athlete => {
-      if (athlete.eventRefs !== undefined || !athlete.events?.length) return athlete
-      const newRefs = athlete.events.map(ev => {
-        // Add to global if not already there
-        if (!globalEvents.find(g => g.id === ev.id)) {
-          const ge: GlobalEvent = {
-            id: ev.id, name: ev.name, type: ev.type,
-            startDate: ev.startDate, endDate: ev.endDate,
-            location: ev.location, travelBefore: ev.travelBefore,
-            travelAfter: ev.travelAfter, notes: ev.notes,
-          }
-          globalEvents.push(ge)
-          storage.saveGlobalEvent(ge)
-        }
-        return { eventId: ev.id, importance: ev.importance }
-      })
-      const migrated = { ...athlete, eventRefs: newRefs, events: undefined }
-      storage.saveAthlete(migrated)
-      return migrated
+  init() {
+    // Listen for auth state changes
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      const user = session?.user ?? null
+      set({ user })
+      if (user) get().loadAll(user.id)
+      else set({ loading: false })
     })
-
-    set({ athletes, plans: storage.getPlans(), globalEvents })
+    supabase.auth.onAuthStateChange((_event, session) => {
+      const user = session?.user ?? null
+      set({ user })
+      if (user) get().loadAll(user.id)
+      else set({ athletes: [], plans: [], globalEvents: [], loading: false })
+    })
   },
 
-  saveAthlete(athlete) {
-    storage.saveAthlete(athlete)
-    set({ athletes: storage.getAthletes() })
+  setUser(user) {
+    set({ user })
   },
 
-  deleteAthlete(id) {
-    storage.deleteAthlete(id)
-    set({ athletes: storage.getAthletes(), plans: storage.getPlans() })
+  async loadAll(userId) {
+    set({ loading: true })
+    const [athletes, plans, globalEvents] = await Promise.all([
+      fetchAthletes(userId),
+      fetchPlans(userId),
+      fetchGlobalEvents(userId),
+    ])
+    set({ athletes, plans, globalEvents, loading: false })
   },
 
-  saveGlobalEvent(event) {
-    storage.saveGlobalEvent(event)
-    set({ globalEvents: storage.getGlobalEvents() })
+  async saveAthlete(athlete) {
+    const userId = get().user?.id
+    if (!userId) return
+    await supabase.from('athletes').upsert({ id: athlete.id, user_id: userId, data: athlete })
+    set({ athletes: await fetchAthletes(userId) })
   },
 
-  deleteGlobalEvent(id) {
-    storage.deleteGlobalEvent(id)
-    set({ globalEvents: storage.getGlobalEvents() })
+  async deleteAthlete(id) {
+    const userId = get().user?.id
+    if (!userId) return
+    await supabase.from('athletes').delete().eq('id', id).eq('user_id', userId)
+    await supabase.from('yearly_plans').delete().eq('athlete_id', id).eq('user_id', userId)
+    const [athletes, plans] = await Promise.all([fetchAthletes(userId), fetchPlans(userId)])
+    set({ athletes, plans })
   },
 
-  createPlan(athleteId, title, startDate, autoGenerate = false) {
+  async saveGlobalEvent(event) {
+    const userId = get().user?.id
+    if (!userId) return
+    await supabase.from('global_events').upsert({ id: event.id, user_id: userId, data: event })
+    set({ globalEvents: await fetchGlobalEvents(userId) })
+  },
+
+  async deleteGlobalEvent(id) {
+    const userId = get().user?.id
+    if (!userId) return
+    await supabase.from('global_events').delete().eq('id', id).eq('user_id', userId)
+    set({ globalEvents: await fetchGlobalEvents(userId) })
+  },
+
+  async createPlan(athleteId, title, startDate, autoGenerate = false) {
+    const userId = get().user?.id
+    if (!userId) return ''
     const id = crypto.randomUUID()
     const athlete = get().athletes.find(a => a.id === athleteId)
     const events = resolveAthleteEvents(athlete?.eventRefs ?? [], get().globalEvents)
@@ -92,91 +138,97 @@ export const usePlanStore = create<PlanStore>((set, get) => ({
       ? autoGenerateWeeks(startDate, events, count, undefined, athlete?.trainingAge ?? 2, athlete?.level ?? 'junior')
       : generateWeeks(startDate, count)
     const plan: YearlyPlan = {
-      id,
-      athleteId,
-      title,
-      startDate,
-      weeks,
+      id, athleteId, title, startDate, weeks,
       planMode: 'simple',
       createdAt: format(new Date(), 'yyyy-MM-dd'),
       updatedAt: format(new Date(), 'yyyy-MM-dd'),
     }
-    storage.savePlan(plan)
-    set({ plans: storage.getPlans() })
+    await supabase.from('yearly_plans').insert({ id, user_id: userId, athlete_id: athleteId, data: plan })
+    set({ plans: await fetchPlans(userId) })
     return id
   },
 
-  regeneratePlan(planId) {
-    const plans = get().plans.map(p => {
-      if (p.id !== planId) return p
-      const athlete = get().athletes.find(a => a.id === p.athleteId)
-      const events = resolveAthleteEvents(athlete?.eventRefs ?? [], get().globalEvents)
-      const count = computePlanLength(p.startDate, events, p.mainGoalEventId)
-      const weeks = events.length > 0
-        ? autoGenerateWeeks(p.startDate, events, count, p.weeklyTemplate, athlete?.trainingAge ?? 2, athlete?.level ?? 'junior')
-        : generateWeeks(p.startDate, count)
-      const updated: YearlyPlan = {
-        ...p,
-        weeks,
-        updatedAt: format(new Date(), 'yyyy-MM-dd'),
-      }
-      storage.savePlan(updated)
-      return updated
-    })
-    set({ plans })
+  async regeneratePlan(planId) {
+    const userId = get().user?.id
+    if (!userId) return
+    const plan = get().plans.find(p => p.id === planId)
+    if (!plan) return
+    const athlete = get().athletes.find(a => a.id === plan.athleteId)
+    const events = resolveAthleteEvents(athlete?.eventRefs ?? [], get().globalEvents)
+    const count = computePlanLength(plan.startDate, events, plan.mainGoalEventId)
+    const weeks = events.length > 0
+      ? autoGenerateWeeks(plan.startDate, events, count, plan.weeklyTemplate, athlete?.trainingAge ?? 2, athlete?.level ?? 'junior')
+      : generateWeeks(plan.startDate, count)
+    const updated: YearlyPlan = { ...plan, weeks, updatedAt: format(new Date(), 'yyyy-MM-dd') }
+    await supabase.from('yearly_plans').update({ data: updated }).eq('id', planId).eq('user_id', userId)
+    set({ plans: await fetchPlans(userId) })
   },
 
-  deletePlan(id) {
-    storage.deletePlan(id)
-    set({ plans: storage.getPlans(), activePlanId: get().activePlanId === id ? null : get().activePlanId })
+  async deletePlan(id) {
+    const userId = get().user?.id
+    if (!userId) return
+    await supabase.from('yearly_plans').delete().eq('id', id).eq('user_id', userId)
+    set({
+      plans: await fetchPlans(userId),
+      activePlanId: get().activePlanId === id ? null : get().activePlanId,
+    })
   },
 
   setActivePlan(id) {
     set({ activePlanId: id })
   },
 
-  updateWeek(planId, weekNumber, patch) {
-    const plans = get().plans.map(p => {
-      if (p.id !== planId) return p
-      const updated: YearlyPlan = {
-        ...p,
-        updatedAt: format(new Date(), 'yyyy-MM-dd'),
-        weeks: p.weeks.map(w => w.weekNumber === weekNumber ? { ...w, ...patch } : w),
-      }
-      storage.savePlan(updated)
-      return updated
-    })
-    set({ plans })
+  async updateWeek(planId, weekNumber, patch) {
+    const userId = get().user?.id
+    if (!userId) return
+    const plan = get().plans.find(p => p.id === planId)
+    if (!plan) return
+    const updated: YearlyPlan = {
+      ...plan,
+      updatedAt: format(new Date(), 'yyyy-MM-dd'),
+      weeks: plan.weeks.map(w => w.weekNumber === weekNumber ? { ...w, ...patch } : w),
+    }
+    await supabase.from('yearly_plans').update({ data: updated }).eq('id', planId).eq('user_id', userId)
+    set({ plans: get().plans.map(p => p.id === planId ? updated : p) })
   },
 
-  updatePlanMode(planId, mode) {
-    const plans = get().plans.map(p => {
-      if (p.id !== planId) return p
-      const updated = { ...p, planMode: mode, updatedAt: format(new Date(), 'yyyy-MM-dd') }
-      storage.savePlan(updated)
-      return updated
-    })
-    set({ plans })
+  async updatePlanMode(planId, mode) {
+    const userId = get().user?.id
+    if (!userId) return
+    const plan = get().plans.find(p => p.id === planId)
+    if (!plan) return
+    const updated = { ...plan, planMode: mode, updatedAt: format(new Date(), 'yyyy-MM-dd') }
+    await supabase.from('yearly_plans').update({ data: updated }).eq('id', planId).eq('user_id', userId)
+    set({ plans: get().plans.map(p => p.id === planId ? updated : p) })
   },
 
-  updatePlanMeta(planId, patch) {
-    const plans = get().plans.map(p => {
-      if (p.id !== planId) return p
-      const updated = { ...p, ...patch, updatedAt: format(new Date(), 'yyyy-MM-dd') }
-      storage.savePlan(updated)
-      return updated
-    })
-    set({ plans })
+  async updatePlanMeta(planId, patch) {
+    const userId = get().user?.id
+    if (!userId) return
+    const plan = get().plans.find(p => p.id === planId)
+    if (!plan) return
+    const updated = { ...plan, ...patch, updatedAt: format(new Date(), 'yyyy-MM-dd') }
+    await supabase.from('yearly_plans').update({ data: updated }).eq('id', planId).eq('user_id', userId)
+    set({ plans: get().plans.map(p => p.id === planId ? updated : p) })
   },
 
-  importAthlete(athlete, plans, newGlobalEvents) {
-    newGlobalEvents.forEach(e => storage.saveGlobalEvent(e))
-    storage.saveAthlete(athlete)
-    plans.forEach(p => storage.savePlan(p))
-    set({
-      athletes: storage.getAthletes(),
-      plans: storage.getPlans(),
-      globalEvents: storage.getGlobalEvents(),
-    })
+  async importAthlete(athlete, plans, newGlobalEvents) {
+    const userId = get().user?.id
+    if (!userId) return
+    await Promise.all([
+      ...newGlobalEvents.map(e =>
+        supabase.from('global_events').upsert({ id: e.id, user_id: userId, data: e })
+      ),
+      supabase.from('athletes').upsert({ id: athlete.id, user_id: userId, data: athlete }),
+      ...plans.map(p =>
+        supabase.from('yearly_plans').upsert({ id: p.id, user_id: userId, athlete_id: p.athleteId, data: p })
+      ),
+    ])
+    const [athletes, updatedPlans, globalEvents] = await Promise.all([
+      fetchAthletes(userId),
+      fetchPlans(userId),
+      fetchGlobalEvents(userId),
+    ])
+    set({ athletes, plans: updatedPlans, globalEvents })
   },
 }))
