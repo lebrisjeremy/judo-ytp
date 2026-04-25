@@ -206,13 +206,18 @@ export const YearGrid = forwardRef<HTMLDivElement, Props>(function YearGrid(
               )
             })}
             <div className="flex items-center">
-              <div className="shrink-0 text-xs text-gray-400 font-medium pr-2 text-right" style={{ width: LABEL_W }}>Testing</div>
-              {weeks.map(w => (
-                <div key={w.weekNumber} style={{ width: COL }}
-                  className="h-6 border-l border-gray-100 flex items-center justify-center text-xs font-bold text-cyan-600">
-                  {(w.sessions?.physicalTesting || w.physicalTestingProposed) ? 'T' : ''}
-                </div>
-              ))}
+              <div className="shrink-0 text-xs text-gray-400 font-medium pr-2 text-right" style={{ width: LABEL_W }}>Testing / Pre-comp</div>
+              {weeks.map(w => {
+                const hasTest = w.sessions?.physicalTesting || w.physicalTestingProposed
+                const hasPreComp = w.preCompSession
+                return (
+                  <div key={w.weekNumber} style={{ width: COL }}
+                    className="h-6 border-l border-gray-100 flex items-center justify-center gap-0.5 text-xs font-bold">
+                    {hasTest && <span className="text-cyan-600">T</span>}
+                    {hasPreComp && <span className="text-amber-500">P</span>}
+                  </div>
+                )
+              })}
             </div>
           </>
         )}
@@ -256,7 +261,7 @@ export const YearGrid = forwardRef<HTMLDivElement, Props>(function YearGrid(
         )}
 
         <p className="text-xs text-gray-400 mt-3" style={{ paddingLeft: LABEL_W }}>
-          Click any phase cell to edit a week · <span className="text-cyan-600 font-medium">T</span> = physical testing · <span className="font-medium" style={{ color: '#94a3b8' }}>Travel/Return</span> = travel days
+          Click any phase cell to edit a week · <span className="text-cyan-600 font-medium">T</span> = physical testing · <span className="text-amber-500 font-medium">P</span> = pre-comp session · <span className="font-medium" style={{ color: '#94a3b8' }}>Travel/Return</span> = travel days
         </p>
       </div>
     </div>

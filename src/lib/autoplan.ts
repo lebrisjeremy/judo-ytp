@@ -1,5 +1,5 @@
-import { addDays, addWeeks, differenceInWeeks, format, isWithinInterval, parseISO, startOfWeek, subDays } from 'date-fns'
-import type { AthleteEvent, Week, SeasonPhase, WeeklyTemplate, WeightCycle, CardioCycle, WeeklySchedule } from '../types'
+import { addDays, addWeeks, differenceInWeeks, format, getDay, isWithinInterval, parseISO, startOfWeek, subDays } from 'date-fns'
+import type { AthleteEvent, Week, SeasonPhase, WeeklyTemplate, WeightCycle, CardioCycle, WeeklySchedule, SessionCounts } from '../types'
 import { DEFAULT_TEMPLATE } from '../types'
 
 const TAPER_WEEKS: Record<number, number> = { 1: 0, 2: 1, 3: 2, 4: 3, 5: 3 }
@@ -158,6 +158,80 @@ function buildSessions(
   }
 }
 
+// Adjust session counts for a tournament week with travel.
+// Reduces training sessions to days available before departure; adds +1 technical (pre-comp
+// weight management) when the athlete travels away and has at least one day before departure.
+function adjustSessionsForTournamentTravel(
+  base: SessionCounts,
+  monday: Date,
+  events: AthleteEvent[],
+  schedule?: WeeklySchedule,
+): { sessions: SessionCounts; preCompSession: boolean } {
+  const sunday = addDays(monday, 6)
+
+  // Only adjust for travel-away competitions starting this week
+  const travelComps = events
+    .filter(e =>
+      e.type === 'competition' &&
+      isWithinInterval(parseISO(e.startDate), { start: monday, end: sunday }) &&
+      (e.travelBefore ?? 0) > 0
+    )
+    .sort((a, b) => parseISO(a.startDate).getTime() - parseISO(b.startDate).getTime())
+
+  if (travelComps.length === 0) {
+    return { sessions: base, preCompSession: false }
+  }
+
+  const comp = travelComps[0]
+  const departureDate = subDays(parseISO(comp.startDate), comp.travelBefore!)
+  // Mon=0, Tue=1, ..., Sun=6. Days with index < cutoffDay are available for training.
+  const cutoffDay = (getDay(departureDate) + 6) % 7
+
+  let adj: SessionCounts
+
+  if (schedule) {
+    let randori = 0, technical = 0, strengthCond = 0, cardio = 0
+    for (const day of schedule.days) {
+      if (day.day >= cutoffDay) continue // blocked by travel
+      for (const s of day.sessions) {
+        const isJudo = s.type === 'randori' || s.type === 'technical'
+        // earlyDeparture: skip evening judo on the day immediately before departure
+        if (comp.earlyDeparture && day.day === cutoffDay - 1 && isJudo) continue
+        if (s.type === 'randori') randori++
+        else if (s.type === 'technical') technical++
+        else if (s.type === 'strength-cond') strengthCond++
+        else if (s.type === 'cardio') cardio++
+      }
+    }
+    adj = { randori, technical, strengthCond, cardio, physicalTesting: false, tournament: true }
+  } else {
+    // Proportional reduction over 5 standard training days (Mon–Fri)
+    const factor = cutoffDay <= 0 ? 0 : Math.min(1, cutoffDay / 5)
+    adj = {
+      randori: Math.round(base.randori * factor),
+      technical: Math.round(base.technical * factor),
+      strengthCond: Math.round(base.strengthCond * factor),
+      cardio: Math.round(base.cardio * factor),
+      physicalTesting: false,
+      tournament: true,
+    }
+    // earlyDeparture: remove one evening judo session
+    if (comp.earlyDeparture) {
+      if (adj.randori > 0) adj.randori--
+      else if (adj.technical > 0) adj.technical--
+    }
+  }
+
+  // Pre-competition weight management: +1 technical when there's at least 1 available day
+  let preCompSession = false
+  if (cutoffDay > 0) {
+    adj.technical += 1
+    preCompSession = true
+  }
+
+  return { sessions: adj, preCompSession }
+}
+
 function isNearMajorComp(weekStart: Date, events: AthleteEvent[], withinWeeks = 2): boolean {
   return events.some(e => {
     if (e.type !== 'competition' || e.importance < 3) return false
@@ -253,6 +327,9 @@ export function autoGenerateWeeks(
     const location: Week['location'] = isCamp || thisWeekCamps.length > 0 ? 'camp'
       : thisWeekComps.some(e => e.location) ? 'travel' : 'home'
 
+    const rawSessions = buildSessions(phase, isCamp, tmpl, thisWeekComps.length > 0, schedule)
+    const { sessions, preCompSession } = adjustSessionsForTournamentTravel(rawSessions, monday, events, schedule)
+
     return {
       weekNumber: i + 1,
       startDate: format(monday, 'yyyy-MM-dd'),
@@ -265,7 +342,8 @@ export function autoGenerateWeeks(
       weekendEvent,
       location,
       travelNote: travelNote ?? undefined,
-      sessions: buildSessions(phase, isCamp, tmpl, thisWeekComps.length > 0, schedule),
+      sessions,
+      preCompSession: preCompSession || undefined,
       weightCycle: assignWeightCycle(phase, weeksToNextComp, trainingAge),
       cardioCycle: assignCardioCycle(phase, weeksToNextComp, athleteLevel),
     } satisfies Week

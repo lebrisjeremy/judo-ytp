@@ -145,6 +145,7 @@ export interface Week {
   weightCycle?: WeightCycle
   cardioCycle?: CardioCycle
 
+  preCompSession?: boolean        // pre-competition weight management session added
   mandalaFocus?: string
   notes?: string
   location?: 'home' | 'travel' | 'camp'
@@ -164,6 +165,7 @@ export interface AthleteEvent {
   notes?: string
   travelBefore?: number
   travelAfter?: number
+  earlyDeparture?: boolean   // if true, skip evening judo the day before departure
 }
 
 // Global reusable event — created once, shared across athletes
@@ -176,6 +178,7 @@ export interface GlobalEvent {
   location?: string
   travelBefore?: number
   travelAfter?: number
+  earlyDeparture?: boolean  // if true, skip evening judo the day before departure
   notes?: string
 }
 
@@ -183,8 +186,9 @@ export interface GlobalEvent {
 export interface AthleteEventRef {
   eventId: string
   importance: 1 | 2 | 3 | 4 | 5
-  travelBefore?: number  // overrides GlobalEvent.travelBefore when set
-  travelAfter?: number   // overrides GlobalEvent.travelAfter when set
+  travelBefore?: number       // overrides GlobalEvent.travelBefore when set
+  travelAfter?: number        // overrides GlobalEvent.travelAfter when set
+  earlyDeparture?: boolean    // overrides GlobalEvent.earlyDeparture when set
 }
 
 // Resolve refs + global events → AthleteEvent[] (the format autoplan expects)
@@ -206,6 +210,7 @@ export function resolveAthleteEvents(
       importance: ref.importance,
       travelBefore: ref.travelBefore ?? ge.travelBefore,
       travelAfter: ref.travelAfter ?? ge.travelAfter,
+      earlyDeparture: ref.earlyDeparture ?? ge.earlyDeparture,
     } satisfies AthleteEvent]
   })
 }

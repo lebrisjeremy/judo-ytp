@@ -38,6 +38,7 @@ function GlobalEventForm({ initial, onSave, onCancel }: {
   const [location, setLocation] = useState(initial?.location ?? '')
   const [travelBefore, setTravelBefore] = useState(initial?.travelBefore ?? 0)
   const [travelAfter, setTravelAfter] = useState(initial?.travelAfter ?? 0)
+  const [earlyDeparture, setEarlyDeparture] = useState(initial?.earlyDeparture ?? false)
   const [notes, setNotes] = useState(initial?.notes ?? '')
 
   const isValid = name.trim() && startDate
@@ -106,6 +107,20 @@ function GlobalEventForm({ initial, onSave, onCancel }: {
             className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
             value={travelAfter || ''} onChange={e => setTravelAfter(Number(e.target.value))} placeholder="0" />
         </div>
+        {travelBefore > 0 && (
+          <div className="col-span-2">
+            <label className="flex items-center gap-2 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={earlyDeparture}
+                onChange={e => setEarlyDeparture(e.target.checked)}
+                className="w-4 h-4 accent-blue-600 rounded"
+              />
+              <span className="text-xs font-medium text-gray-700">Early departure</span>
+              <span className="text-xs text-gray-400">(skip evening judo the day before departure)</span>
+            </label>
+          </div>
+        )}
         <div className="col-span-2">
           <label className="text-xs font-medium text-gray-600 mb-1 block">Notes</label>
           <input
@@ -125,6 +140,7 @@ function GlobalEventForm({ initial, onSave, onCancel }: {
               location: location || undefined,
               travelBefore: travelBefore || undefined,
               travelAfter: travelAfter || undefined,
+              earlyDeparture: earlyDeparture || undefined,
               notes: notes || undefined,
             })
           }}
