@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import type { User } from '@supabase/supabase-js'
-import type { Athlete, YearlyPlan, Week, GlobalEvent, WeeklySchedule } from '../types'
+import type { Athlete, YearlyPlan, Week, GlobalEvent, WeeklySchedule, GeneratedSession } from '../types'
 import { resolveAthleteEvents } from '../types'
 import { generateWeeks, computePlanLength } from '../lib/dates'
 import { autoGenerateWeeks } from '../lib/autoplan'
@@ -27,6 +27,10 @@ async function fetchSchedules(userId: string): Promise<WeeklySchedule[]> {
   const { data } = await supabase.from('weekly_schedules').select('data').eq('user_id', userId)
   return (data ?? []).map(r => r.data as WeeklySchedule)
 }
+async function fetchGeneratedSessions(userId: string): Promise<GeneratedSession[]> {
+  const { data } = await supabase.from('generated_sessions').select('data').eq('user_id', userId)
+  return (data ?? []).map(r => r.data as GeneratedSession)
+}
 
 // ---------------------------------------------------------------------------
 // Store interface
@@ -39,6 +43,7 @@ interface PlanStore {
   plans: YearlyPlan[]
   globalEvents: GlobalEvent[]
   weeklySchedules: WeeklySchedule[]
+  generatedSessions: GeneratedSession[]
   activePlanId: string | null
 
   init: () => void
@@ -51,6 +56,8 @@ interface PlanStore {
   deleteGlobalEvent: (id: string) => Promise<void>
   saveSchedule: (s: WeeklySchedule) => Promise<void>
   deleteSchedule: (id: string) => Promise<void>
+  saveGeneratedSession: (s: GeneratedSession) => Promise<void>
+  deleteGeneratedSession: (id: string) => Promise<void>
 
   createPlan: (athleteId: string, title: string, startDate: string, autoGenerate?: boolean) => Promise<string>
   regeneratePlan: (planId: string) => Promise<void>
@@ -73,6 +80,7 @@ export const usePlanStore = create<PlanStore>((set, get) => ({
   plans: [],
   globalEvents: [],
   weeklySchedules: [],
+  generatedSessions: [],
   activePlanId: null,
 
   init() {
@@ -87,7 +95,7 @@ export const usePlanStore = create<PlanStore>((set, get) => ({
       const user = session?.user ?? null
       set({ user })
       if (user) get().loadAll(user.id)
-      else set({ athletes: [], plans: [], globalEvents: [], weeklySchedules: [], loading: false })
+      else set({ athletes: [], plans: [], globalEvents: [], weeklySchedules: [], generatedSessions: [], loading: false })
     })
   },
 
@@ -97,13 +105,14 @@ export const usePlanStore = create<PlanStore>((set, get) => ({
 
   async loadAll(userId) {
     set({ loading: true })
-    const [athletes, plans, globalEvents, weeklySchedules] = await Promise.all([
+    const [athletes, plans, globalEvents, weeklySchedules, generatedSessions] = await Promise.all([
       fetchAthletes(userId),
       fetchPlans(userId),
       fetchGlobalEvents(userId),
       fetchSchedules(userId),
+      fetchGeneratedSessions(userId),
     ])
-    set({ athletes, plans, globalEvents, weeklySchedules, loading: false })
+    set({ athletes, plans, globalEvents, weeklySchedules, generatedSessions, loading: false })
   },
 
   async saveAthlete(athlete) {
@@ -148,6 +157,20 @@ export const usePlanStore = create<PlanStore>((set, get) => ({
     if (!userId) return
     await supabase.from('weekly_schedules').delete().eq('id', id).eq('user_id', userId)
     set({ weeklySchedules: await fetchSchedules(userId) })
+  },
+
+  async saveGeneratedSession(session) {
+    const userId = get().user?.id
+    if (!userId) return
+    await supabase.from('generated_sessions').upsert({ id: session.id, user_id: userId, plan_id: session.planId, data: session })
+    set({ generatedSessions: await fetchGeneratedSessions(userId) })
+  },
+
+  async deleteGeneratedSession(id) {
+    const userId = get().user?.id
+    if (!userId) return
+    await supabase.from('generated_sessions').delete().eq('id', id).eq('user_id', userId)
+    set({ generatedSessions: get().generatedSessions.filter(s => s.id !== id) })
   },
 
   async createPlan(athleteId, title, startDate, autoGenerate = false) {

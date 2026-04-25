@@ -4,12 +4,13 @@ import { YearGrid } from './YearGrid'
 import { WeekList } from './WeekList'
 import { WeekEditorModal } from './WeekEditorModal'
 import { RecommendationBanner } from './RecommendationBanner'
+import { SessionsView } from './SessionsView'
 import type { Week } from '../types'
 import { PHASE_LABELS, PHASE_COLORS, resolveAthleteEvents } from '../types'
 import { exportToExcel } from '../lib/excel'
 import { exportToPdf } from '../lib/pdf'
 import { runAllRules } from '../lib/rules'
-import { ArrowLeft, LayoutGrid, List, Download, FileSpreadsheet, ToggleLeft, ToggleRight, RefreshCw } from 'lucide-react'
+import { ArrowLeft, LayoutGrid, List, Download, FileSpreadsheet, ToggleLeft, ToggleRight, RefreshCw, Dumbbell } from 'lucide-react'
 
 interface Props {
   planId: string
@@ -71,7 +72,7 @@ export function PlanEditor({ planId, onBack }: Props) {
   const plan = plans.find(p => p.id === planId)
   const athlete = plan ? athletes.find(a => a.id === plan.athleteId) : undefined
 
-  const [view, setView] = useState<'grid' | 'list'>('list')
+  const [view, setView] = useState<'grid' | 'list' | 'sessions'>('list')
   const [editingWeek, setEditingWeek] = useState<number | null>(null)
   const [exporting, setExporting] = useState(false)
   const [confirmRegen, setConfirmRegen] = useState(false)
@@ -141,6 +142,12 @@ export function PlanEditor({ planId, onBack }: Props) {
                 }`}>
                 <LayoutGrid size={14} /> Year Grid
               </button>
+              <button onClick={() => setView('sessions')}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                  view === 'sessions' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+                }`}>
+                <Dumbbell size={14} /> Sessions
+              </button>
             </div>
 
             {/* Right: mode toggle + export */}
@@ -198,21 +205,23 @@ export function PlanEditor({ planId, onBack }: Props) {
       <div className="max-w-7xl mx-auto px-4 py-6">
         <RecommendationBanner results={recommendations} />
 
-        {view === 'grid'
-          ? <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
-              <YearGrid
+        {view === 'sessions'
+          ? <SessionsView plan={plan} athlete={athlete} />
+          : view === 'grid'
+            ? <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
+                <YearGrid
+                  weeks={plan.weeks}
+                  planMode={plan.planMode}
+                  onEditWeek={setEditingWeek}
+                  athlete={athlete}
+                />
+              </div>
+            : <WeekList
                 weeks={plan.weeks}
                 planMode={plan.planMode}
                 onEditWeek={setEditingWeek}
                 athlete={athlete}
               />
-            </div>
-          : <WeekList
-              weeks={plan.weeks}
-              planMode={plan.planMode}
-              onEditWeek={setEditingWeek}
-              athlete={athlete}
-            />
         }
 
         {/* Phase summary cards */}

@@ -69,6 +69,40 @@ export const SESSION_TYPE_COLORS: Record<SessionType, string> = {
 
 export const DAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 
+export interface ExerciseItem {
+  name: string
+  sets: string
+  reps: string
+  rest: string
+  notes?: string
+}
+
+export interface SessionContent {
+  title: string
+  objective: string
+  warmUp: string
+  mainSet: string
+  restPeriods: string
+  coolDown: string
+  estimatedDuration: number  // minutes
+  intensityTarget: string
+  coachingNotes: string
+  exercises?: ExerciseItem[]
+}
+
+export interface GeneratedSession {
+  id: string
+  planId: string
+  weekNumber: number
+  sessionType: 'cardio' | 'weight'
+  sessionNumber: 1 | 2
+  cycleName: string
+  content: SessionContent
+  isEdited: boolean
+  createdAt: string
+  updatedAt: string
+}
+
 export const DEFAULT_TEMPLATE: WeeklyTemplate = {
   technicalPerWeek: 2,
   randoriPerWeek: 3,
