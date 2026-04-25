@@ -6,8 +6,6 @@ export type SeasonPhase =
   | 'battle'
   | 'transition'
 
-export type TrainingCycle = 'DEV1' | 'DEV2' | 'SHARPENING' | 'REST' | 'COMPETITION'
-
 // 6 weight training cycles — Bompa-based judo S&C periodization
 export type WeightCycle =
   | 'reathletisation'    // GPP rebuild, light loads
@@ -34,6 +32,43 @@ export interface WeeklyTemplate {
   strengthCondPerWeek: number
 }
 
+export type SessionType = 'technical' | 'randori' | 'strength-cond' | 'cardio' | 'rest'
+
+export interface ScheduledSession {
+  type: SessionType
+  duration?: number   // minutes
+  notes?: string
+}
+
+export interface DaySchedule {
+  day: 0 | 1 | 2 | 3 | 4 | 5 | 6   // 0 = Monday, 6 = Sunday
+  sessions: ScheduledSession[]
+}
+
+export interface WeeklySchedule {
+  id: string
+  name: string
+  days: DaySchedule[]
+}
+
+export const SESSION_TYPE_LABELS: Record<SessionType, string> = {
+  technical: 'Technical',
+  randori: 'Randori',
+  'strength-cond': 'S&C',
+  cardio: 'Cardio',
+  rest: 'Rest',
+}
+
+export const SESSION_TYPE_COLORS: Record<SessionType, string> = {
+  technical: '#3b82f6',
+  randori: '#ef4444',
+  'strength-cond': '#22c55e',
+  cardio: '#f59e0b',
+  rest: '#94a3b8',
+}
+
+export const DAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+
 export const DEFAULT_TEMPLATE: WeeklyTemplate = {
   technicalPerWeek: 2,
   randoriPerWeek: 3,
@@ -52,6 +87,7 @@ export interface SessionCounts {
   randori: number
   technical: number
   strengthCond: number
+  cardio: number
   physicalTesting: boolean
   tournament: boolean
 }
@@ -62,7 +98,6 @@ export interface Week {
   endDate: string
 
   seasonPhase: SeasonPhase
-  cycle?: TrainingCycle
 
   volume: 1 | 2 | 3 | 4 | 5
   intensity: 1 | 2 | 3 | 4 | 5
@@ -153,6 +188,7 @@ export interface Athlete {
   showCardioCycles?: boolean
   eventRefs?: AthleteEventRef[]   // replaces events — references to GlobalEvent
   events?: AthleteEvent[]          // legacy field — auto-migrated on first load
+  scheduleId?: string              // reference to WeeklySchedule for auto-generation
 }
 
 export interface YearlyPlan {

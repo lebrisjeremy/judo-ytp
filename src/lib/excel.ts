@@ -13,8 +13,8 @@ export function exportToExcel(plan: YearlyPlan, athlete: Athlete) {
     ...(athlete.showCardioCycles ? ['Cardio Cycle'] : []),
   ]
   const headers = plan.planMode === 'detailed'
-    ? ['Week', 'Dates', 'Month', 'Phase', 'Cycle', 'Volume', 'Intensity',
-        'Randori', 'Technical', 'S&C', 'Physical Testing', ...cycleHeaders, 'Week Event', 'Importance', 'Weekend Event', 'Wknd Importance',
+    ? ['Week', 'Dates', 'Month', 'Phase', 'Volume', 'Intensity',
+        'Randori', 'Technical', 'S&C', 'Cardio', 'Physical Testing', ...cycleHeaders, 'Week Event', 'Importance', 'Weekend Event', 'Wknd Importance',
         'Matches', 'Location', 'Mandala Focus', 'Notes']
     : ['Week', 'Dates', 'Month', 'Phase', 'Volume', 'Intensity', ...cycleHeaders, 'Week Event', 'Importance', 'Weekend Event', 'Wknd Importance',
         'Matches', 'Location', 'Mandala Focus', 'Notes']
@@ -28,12 +28,12 @@ export function exportToExcel(plan: YearlyPlan, athlete: Athlete) {
     ]
     if (plan.planMode === 'detailed') {
       base.push(
-        w.cycle ?? '',
         VOLUME_LABELS[w.volume],
         INTENSITY_LABELS[w.intensity],
         w.sessions?.randori ?? 0,
         w.sessions?.technical ?? 0,
         w.sessions?.strengthCond ?? 0,
+        w.sessions?.cardio ?? 0,
         (w.sessions?.physicalTesting || w.physicalTestingProposed) ? 'X' : '',
       )
     } else {

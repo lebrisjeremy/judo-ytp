@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import type { Week, SeasonPhase, TrainingCycle, CompType, Competition, WeightCycle, CardioCycle } from '../types'
+import type { Week, SeasonPhase, CompType, Competition, WeightCycle, CardioCycle } from '../types'
 import { PHASE_LABELS, PHASE_BG, VOLUME_LABELS, INTENSITY_LABELS, IMPORTANCE_STARS,
   WEIGHT_CYCLE_LABELS, WEIGHT_CYCLE_COLORS,
   CARDIO_CYCLE_LABELS, CARDIO_CYCLE_COLORS } from '../types'
@@ -23,7 +23,6 @@ const CARDIO_CYCLES: CardioCycle[] = [
 ]
 
 const PHASES: SeasonPhase[] = ['forge', 'sculpt', 'conversion', 'sharpening', 'battle', 'transition']
-const CYCLES: TrainingCycle[] = ['DEV1', 'DEV2', 'SHARPENING', 'REST', 'COMPETITION']
 const COMP_TYPES: { value: CompType; label: string }[] = [
   { value: 'development', label: 'Development' },
   { value: 'medium', label: 'Medium' },
@@ -96,7 +95,6 @@ function CompetitionEditor({ label, value, onChange }: {
 
 export function WeekEditorModal({ week, planMode, showWeightCycles, showCardioCycles, onSave, onClose }: Props) {
   const [phase, setPhase] = useState<SeasonPhase>(week.seasonPhase)
-  const [cycle, setCycle] = useState<TrainingCycle | undefined>(week.cycle)
   const [weightCycle, setWeightCycle] = useState<WeightCycle | undefined>(week.weightCycle)
   const [cardioCycle, setCardioCycle] = useState<CardioCycle | undefined>(week.cardioCycle)
   const [volume, setVolume] = useState<1|2|3|4|5>(week.volume)
@@ -107,13 +105,12 @@ export function WeekEditorModal({ week, planMode, showWeightCycles, showCardioCy
   const [notes, setNotes] = useState(week.notes ?? '')
   const [location, setLocation] = useState<Week['location']>(week.location ?? 'home')
   const [sessions, setSessions] = useState(week.sessions ?? {
-    randori: 0, technical: 0, strengthCond: 0, physicalTesting: false, tournament: false,
+    randori: 0, technical: 0, strengthCond: 0, cardio: 0, physicalTesting: false, tournament: false,
   })
 
   function handleSave() {
     onSave({
       seasonPhase: phase,
-      cycle,
       weightCycle,
       cardioCycle,
       volume,
@@ -159,25 +156,6 @@ export function WeekEditorModal({ week, planMode, showWeightCycles, showCardioCy
               ))}
             </div>
           </div>
-
-          {/* Cycle (Detailed mode) */}
-          {planMode === 'detailed' && (
-            <div>
-              <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2 block">Training Cycle</label>
-              <div className="flex flex-wrap gap-2">
-                {CYCLES.map(c => (
-                  <button key={c} onClick={() => setCycle(c === cycle ? undefined : c)}
-                    className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all border-2 ${
-                      cycle === c
-                        ? 'bg-gray-800 text-white border-transparent'
-                        : 'bg-white text-gray-600 border-gray-200 hover:border-gray-400'
-                    }`}>
-                    {c}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
 
           {/* Weight Cycle */}
           {showWeightCycles && (
@@ -253,17 +231,18 @@ export function WeekEditorModal({ week, planMode, showWeightCycles, showCardioCy
           {planMode === 'detailed' && (
             <div>
               <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2 block">Sessions per Week</label>
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-4 gap-3">
                 {([
-                  ['randori', 'Randori (PTC)'],
+                  ['randori', 'Randori'],
                   ['technical', 'Technical'],
                   ['strengthCond', 'S&C'],
+                  ['cardio', 'Cardio'],
                 ] as const).map(([key, label]) => (
                   <div key={key}>
                     <label className="text-xs text-gray-500 mb-1 block">{label}</label>
                     <input type="number" min={0} max={7}
                       className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
-                      value={sessions[key] || ''}
+                      value={(sessions[key] as number) || ''}
                       onChange={e => setSessions({ ...sessions, [key]: Number(e.target.value) })}
                       placeholder="0" />
                   </div>

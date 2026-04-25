@@ -1,5 +1,5 @@
 import { addDays, addWeeks, differenceInWeeks, format, isWithinInterval, parseISO, startOfWeek, subDays } from 'date-fns'
-import type { AthleteEvent, Week, SeasonPhase, WeeklyTemplate, WeightCycle, CardioCycle } from '../types'
+import type { AthleteEvent, Week, SeasonPhase, WeeklyTemplate, WeightCycle, CardioCycle, WeeklySchedule } from '../types'
 import { DEFAULT_TEMPLATE } from '../types'
 
 const TAPER_WEEKS: Record<number, number> = { 1: 0, 2: 1, 3: 2, 4: 3, 5: 3 }
@@ -118,18 +118,41 @@ function assignCardioCycle(
   return 'lactic-capacity'
 }
 
-function buildSessions(phase: SeasonPhase, isCamp: boolean, tmpl: WeeklyTemplate, hasComp: boolean) {
+function countFromSchedule(schedule: WeeklySchedule) {
+  let randori = 0, technical = 0, strengthCond = 0, cardio = 0
+  for (const day of schedule.days) {
+    for (const s of day.sessions) {
+      if (s.type === 'randori') randori++
+      else if (s.type === 'technical') technical++
+      else if (s.type === 'strength-cond') strengthCond++
+      else if (s.type === 'cardio') cardio++
+    }
+  }
+  return { randori, technical, strengthCond, cardio }
+}
+
+function buildSessions(
+  phase: SeasonPhase,
+  isCamp: boolean,
+  tmpl: WeeklyTemplate,
+  hasComp: boolean,
+  schedule?: WeeklySchedule,
+) {
   if (phase === 'transition') {
-    return { randori: 0, technical: 1, strengthCond: 0, physicalTesting: false, tournament: false }
+    return { randori: 0, technical: 1, strengthCond: 0, cardio: 0, physicalTesting: false, tournament: false }
   }
   if (isCamp) {
-    return { randori: 5, technical: 2, strengthCond: 1, physicalTesting: false, tournament: false }
+    return { randori: 5, technical: 2, strengthCond: 1, cardio: 1, physicalTesting: false, tournament: false }
   }
+  const base = schedule
+    ? countFromSchedule(schedule)
+    : { randori: tmpl.randoriPerWeek, technical: tmpl.technicalPerWeek, strengthCond: tmpl.strengthCondPerWeek, cardio: 0 }
   const taper = phase === 'sharpening' || phase === 'battle'
   return {
-    randori: taper ? Math.max(1, tmpl.randoriPerWeek - 1) : tmpl.randoriPerWeek,
-    technical: tmpl.technicalPerWeek,
-    strengthCond: taper ? Math.max(0, tmpl.strengthCondPerWeek - 1) : tmpl.strengthCondPerWeek,
+    randori: taper ? Math.max(1, base.randori - 1) : base.randori,
+    technical: base.technical,
+    strengthCond: taper ? Math.max(0, base.strengthCond - 1) : base.strengthCond,
+    cardio: taper ? Math.max(0, base.cardio - 1) : base.cardio,
     physicalTesting: false,
     tournament: hasComp,
   }
@@ -180,6 +203,7 @@ export function autoGenerateWeeks(
   template?: WeeklyTemplate,
   trainingAge = 2,
   athleteLevel = 'junior',
+  schedule?: WeeklySchedule,
 ): Week[] {
   const tmpl = template ?? DEFAULT_TEMPLATE
   const planStart = startOfWeek(parseISO(startDateStr), { weekStartsOn: 1 })
@@ -241,7 +265,7 @@ export function autoGenerateWeeks(
       weekendEvent,
       location,
       travelNote: travelNote ?? undefined,
-      sessions: buildSessions(phase, isCamp, tmpl, thisWeekComps.length > 0),
+      sessions: buildSessions(phase, isCamp, tmpl, thisWeekComps.length > 0, schedule),
       weightCycle: assignWeightCycle(phase, weeksToNextComp, trainingAge),
       cardioCycle: assignCardioCycle(phase, weeksToNextComp, athleteLevel),
     } satisfies Week

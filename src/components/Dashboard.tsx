@@ -2,7 +2,8 @@ import { useState, useRef } from 'react'
 import { usePlanStore } from '../store/planStore'
 import type { Athlete } from '../types'
 import { EventsEditor } from './EventsEditor'
-import { Plus, Trash2, ChevronRight, User, Calendar, Wand2, ChevronDown, ChevronUp, Download, Upload } from 'lucide-react'
+import { ScheduleEditor } from './ScheduleEditor'
+import { Plus, Trash2, ChevronRight, User, Calendar, Wand2, ChevronDown, ChevronUp, Download, Upload, ClipboardList } from 'lucide-react'
 import { format } from 'date-fns'
 import { exportAthlete, validateImport, resolveImport } from '../lib/exportImport'
 import type { AthleteExport } from '../lib/exportImport'
@@ -197,7 +198,7 @@ function NewPlanForm({ hasEvents, onSave, onCancel }: {
 }
 
 export function Dashboard({ onOpenPlan }: Props) {
-  const { athletes, plans, globalEvents, saveAthlete, deleteAthlete, createPlan, deletePlan, saveGlobalEvent, deleteGlobalEvent, importAthlete } = usePlanStore()
+  const { athletes, plans, globalEvents, weeklySchedules, saveAthlete, deleteAthlete, createPlan, deletePlan, saveGlobalEvent, deleteGlobalEvent, saveSchedule, deleteSchedule, importAthlete } = usePlanStore()
   const [showAthleteForm, setShowAthleteForm] = useState(false)
   const [editingAthleteId, setEditingAthleteId] = useState<string | null>(null)
   const [newPlanFor, setNewPlanFor] = useState<string | null>(null)
@@ -205,6 +206,7 @@ export function Dashboard({ onOpenPlan }: Props) {
   const [confirmDelete, setConfirmDelete] = useState<{ type: 'athlete' | 'plan'; id: string } | null>(null)
   const [importModal, setImportModal] = useState<{ data: AthleteExport; duplicate: Athlete | undefined } | null>(null)
   const [importError, setImportError] = useState<string | null>(null)
+  const [schedulesExpanded, setSchedulesExpanded] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   function toggleAthleteExpand(id: string) {
@@ -387,6 +389,35 @@ export function Dashboard({ onOpenPlan }: Props) {
           </div>
         )}
 
+        {/* Weekly Schedules section */}
+        <div className="mb-8 bg-white rounded-2xl border border-gray-200 shadow-sm">
+          <button
+            className="w-full flex items-center gap-3 px-5 py-4 text-left"
+            onClick={() => setSchedulesExpanded(prev => !prev)}
+          >
+            <ClipboardList size={18} className="text-gray-400 shrink-0" />
+            <div className="flex-1">
+              <span className="font-semibold text-gray-800 text-sm">Weekly Schedule Templates</span>
+              <span className="ml-2 text-xs text-gray-400">{weeklySchedules.length} schedule{weeklySchedules.length !== 1 ? 's' : ''}</span>
+            </div>
+            {schedulesExpanded
+              ? <ChevronUp size={15} className="text-gray-400" />
+              : <ChevronDown size={15} className="text-gray-400" />
+            }
+          </button>
+          {schedulesExpanded && (
+            <div className="px-5 pb-5 border-t border-gray-100">
+              <div className="pt-4">
+                <ScheduleEditor
+                  schedules={weeklySchedules}
+                  onSave={saveSchedule}
+                  onDelete={deleteSchedule}
+                />
+              </div>
+            </div>
+          )}
+        </div>
+
         {/* Athletes list */}
         <div className="space-y-4">
           {athletes.map(athlete => {
@@ -479,6 +510,22 @@ export function Dashboard({ onOpenPlan }: Props) {
                           onSaveGlobalEvent={saveGlobalEvent}
                           onDeleteGlobalEvent={deleteGlobalEvent}
                         />
+                        {/* Schedule picker */}
+                        {weeklySchedules.length > 0 && (
+                          <div>
+                            <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2">Weekly Schedule (for auto-generation)</p>
+                            <select
+                              className="border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                              value={athlete.scheduleId ?? ''}
+                              onChange={e => saveAthlete({ ...athlete, scheduleId: e.target.value || undefined })}
+                            >
+                              <option value="">None</option>
+                              {weeklySchedules.map(s => (
+                                <option key={s.id} value={s.id}>{s.name}</option>
+                              ))}
+                            </select>
+                          </div>
+                        )}
                       </div>
                     )}
 

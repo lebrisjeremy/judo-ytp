@@ -207,25 +207,6 @@ function drawYearGridPage(doc: jsPDF, plan: YearlyPlan, athlete: Athlete): void 
       y += rowH
     })
 
-    const cycleColors: Record<string, string> = {
-      DEV1: '#22c55e', DEV2: '#84cc16', SHARPENING: '#a855f7',
-      REST: '#6b7280', COMPETITION: '#ef4444',
-    }
-    rowLabel('Cycle')
-    weeks.forEach((w, i) => {
-      if (!w.cycle) return
-      const x = margin + labelW + i * colW
-      const hex = cycleColors[w.cycle]
-      if (!hex) return
-      const rgb = hexToRgb(hex)
-      doc.setFillColor(rgb[0], rgb[1], rgb[2])
-      doc.rect(x + 0.1, y + 0.4, Math.max(colW - 0.2, 0.2), rowH - 0.8, 'F')
-      doc.setFontSize(3)
-      doc.setTextColor(255, 255, 255)
-      doc.text(w.cycle.slice(0, 3), x + colW / 2, y + rowH * 0.72, { align: 'center' })
-      doc.setTextColor(0, 0, 0)
-    })
-    y += rowH
   }
 
   // Weight Cycles
@@ -314,11 +295,10 @@ export function exportToPdf(plan: YearlyPlan, athlete: Athlete) {
         { label: 'Dates', w: 36 },
         { label: 'Month', w: 20 },
         { label: 'Phase', w: 28 },
-        { label: 'Cycle', w: 20 },
-        { label: 'Volume', w: 48 },
-        { label: 'Intensity', w: 48 },
+        { label: 'Volume', w: 54 },
+        { label: 'Intensity', w: 54 },
         { label: 'Events', w: 50 },
-        { label: 'Focus', w: 19 },
+        { label: 'Focus', w: 9 },
       ]
     : [
         { label: '#', w: 8 },
@@ -377,8 +357,7 @@ export function exportToPdf(plan: YearlyPlan, athlete: Athlete) {
           weekRange(w.startDate, w.endDate),
           monthOf(w.startDate),
           PHASE_LABELS[w.seasonPhase],
-          w.cycle ?? '',
-          `${w.volume}/5 — ${VOLUME_LABELS[w.volume].split(' – ')[1]?.slice(0, 18) ?? ''}`,
+          `${w.volume}/5 — ${VOLUME_LABELS[w.volume].split(' – ')[1]?.slice(0, 22) ?? ''}`,
           `${w.intensity}/5 — ${INTENSITY_LABELS[w.intensity].split(': ')[1]?.slice(0, 18) ?? ''}`,
           [
             ...[w.weekEvent, w.weekendEvent].filter(Boolean).map(e => `${e!.name} ${IMPORTANCE_STARS[e!.importance - 1]}`),

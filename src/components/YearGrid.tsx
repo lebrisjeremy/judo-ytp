@@ -191,15 +191,15 @@ export const YearGrid = forwardRef<HTMLDivElement, Props>(function YearGrid(
         {/* Session counts (Detailed mode) */}
         {planMode === 'detailed' && (
           <>
-            {(['randori', 'technical', 'strengthCond'] as const).map((key, i) => {
-              const labels = ['Randori', 'Technical', 'S&C']
+            {(['randori', 'technical', 'strengthCond', 'cardio'] as const).map((key, i) => {
+              const labels = ['Randori', 'Technical', 'S&C', 'Cardio']
               return (
                 <div key={key} className="flex items-center">
                   <div className="shrink-0 text-xs text-gray-400 font-medium pr-2 text-right" style={{ width: LABEL_W }}>{labels[i]}</div>
                   {weeks.map(w => (
                     <div key={w.weekNumber} style={{ width: COL }}
                       className="h-6 border-l border-gray-100 flex items-center justify-center text-xs text-gray-500 font-mono">
-                      {w.sessions?.[key] || ''}
+                      {(w.sessions?.[key] ?? 0) || ''}
                     </div>
                   ))}
                 </div>
@@ -215,28 +215,6 @@ export const YearGrid = forwardRef<HTMLDivElement, Props>(function YearGrid(
               ))}
             </div>
           </>
-        )}
-
-        {/* Cycle (Detailed mode) */}
-        {planMode === 'detailed' && (
-          <div className="flex items-center mt-1">
-            <div className="shrink-0 text-xs text-gray-500 font-medium pr-2 text-right" style={{ width: LABEL_W }}>Cycle</div>
-            {weeks.map(w => {
-              const cycleColors: Record<string, string> = {
-                DEV1: '#22c55e', DEV2: '#84cc16', SHARPENING: '#a855f7', REST: '#6b7280', COMPETITION: '#ef4444',
-              }
-              return (
-                <div key={w.weekNumber} style={{ width: COL, backgroundColor: w.cycle ? cycleColors[w.cycle] + '33' : 'transparent' }}
-                  className="h-6 border-l border-gray-100 flex items-center justify-center">
-                  {w.cycle && (
-                    <span className="font-mono" style={{ fontSize: 7, color: cycleColors[w.cycle] }}>
-                      {w.cycle.slice(0, 3)}
-                    </span>
-                  )}
-                </div>
-              )
-            })}
-          </div>
         )}
 
         {/* Weight Cycles */}

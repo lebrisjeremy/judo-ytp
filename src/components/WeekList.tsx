@@ -73,10 +73,10 @@ export function WeekList({ weeks, planMode, onEditWeek, athlete }: Props) {
                   <th className="px-4 py-2 text-center">Vol</th>
                   <th className="px-4 py-2 text-center">Int</th>
                   {planMode === 'detailed' && <>
-                    <th className="px-4 py-2 text-center">Cycle</th>
                     <th className="px-4 py-2 text-center">Rnd</th>
                     <th className="px-4 py-2 text-center">Tech</th>
                     <th className="px-4 py-2 text-center">S&C</th>
+                    <th className="px-4 py-2 text-center">Cardio</th>
                   </>}
                   {athlete?.showWeightCycles && <th className="px-4 py-2 text-center">Weight</th>}
                   {athlete?.showCardioCycles && <th className="px-4 py-2 text-center">Cardio</th>}
@@ -109,14 +109,10 @@ export function WeekList({ weeks, planMode, onEditWeek, athlete }: Props) {
                       <VolBar value={w.intensity} color="#3b82f6" />
                     </td>
                     {planMode === 'detailed' && <>
-                      <td className="px-4 py-2.5 text-center">
-                        {w.cycle && (
-                          <span className="text-xs font-mono bg-gray-100 px-1.5 py-0.5 rounded text-gray-600">{w.cycle}</span>
-                        )}
-                      </td>
                       <td className="px-4 py-2.5 text-center text-xs text-gray-500 font-mono">{w.sessions?.randori || '–'}</td>
                       <td className="px-4 py-2.5 text-center text-xs text-gray-500 font-mono">{w.sessions?.technical || '–'}</td>
                       <td className="px-4 py-2.5 text-center text-xs text-gray-500 font-mono">{w.sessions?.strengthCond || '–'}</td>
+                      <td className="px-4 py-2.5 text-center text-xs text-gray-500 font-mono">{(w.sessions?.cardio ?? 0) || '–'}</td>
                     </>}
                     {athlete?.showWeightCycles && (
                       <td className="px-3 py-2.5 text-center">
