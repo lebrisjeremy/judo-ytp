@@ -1,9 +1,11 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { usePlanStore } from '../store/planStore'
 import type { Athlete } from '../types'
 import { EventsEditor } from './EventsEditor'
-import { Plus, Trash2, ChevronRight, User, Calendar, Wand2, ChevronDown, ChevronUp } from 'lucide-react'
+import { Plus, Trash2, ChevronRight, User, Calendar, Wand2, ChevronDown, ChevronUp, Download, Upload } from 'lucide-react'
 import { format } from 'date-fns'
+import { exportAthlete, validateImport, resolveImport } from '../lib/exportImport'
+import type { AthleteExport } from '../lib/exportImport'
 
 interface Props {
   onOpenPlan: (planId: string) => void
@@ -195,12 +197,15 @@ function NewPlanForm({ hasEvents, onSave, onCancel }: {
 }
 
 export function Dashboard({ onOpenPlan }: Props) {
-  const { athletes, plans, globalEvents, saveAthlete, deleteAthlete, createPlan, deletePlan, saveGlobalEvent, deleteGlobalEvent } = usePlanStore()
+  const { athletes, plans, globalEvents, saveAthlete, deleteAthlete, createPlan, deletePlan, saveGlobalEvent, deleteGlobalEvent, importAthlete } = usePlanStore()
   const [showAthleteForm, setShowAthleteForm] = useState(false)
   const [editingAthleteId, setEditingAthleteId] = useState<string | null>(null)
   const [newPlanFor, setNewPlanFor] = useState<string | null>(null)
   const [expandedAthleteId, setExpandedAthleteId] = useState<string | null>(null)
   const [confirmDelete, setConfirmDelete] = useState<{ type: 'athlete' | 'plan'; id: string } | null>(null)
+  const [importModal, setImportModal] = useState<{ data: AthleteExport; duplicate: Athlete | undefined } | null>(null)
+  const [importError, setImportError] = useState<string | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   function toggleAthleteExpand(id: string) {
     setExpandedAthleteId(prev => prev === id ? null : id)
@@ -210,8 +215,36 @@ export function Dashboard({ onOpenPlan }: Props) {
     saveAthlete(a)
     setShowAthleteForm(false)
     setEditingAthleteId(null)
-    // Auto-expand new athletes to encourage adding events
     if (!athletes.find(x => x.id === a.id)) setExpandedAthleteId(a.id)
+  }
+
+  function handleImportFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = ev => {
+      try {
+        const parsed = JSON.parse(ev.target?.result as string)
+        const result = validateImport(parsed)
+        if (!result.ok) { setImportError(result.error); return }
+        const duplicate = athletes.find(a => a.id === result.data.athlete.id)
+        setImportModal({ data: result.data, duplicate })
+      } catch {
+        setImportError('Could not parse file. Make sure it is a valid JSON export.')
+      }
+    }
+    reader.readAsText(file)
+  }
+
+  function handleConfirmImport(mode: 'replace' | 'copy') {
+    if (!importModal) return
+    const { athlete, plans: newPlans, newGlobalEvents } = resolveImport(
+      importModal.data, globalEvents, mode
+    )
+    importAthlete(athlete, newPlans, newGlobalEvents)
+    setImportModal(null)
+    setExpandedAthleteId(athlete.id)
   }
 
 
@@ -225,12 +258,21 @@ export function Dashboard({ onOpenPlan }: Props) {
             <h1 className="text-3xl font-bold text-gray-900">Judo YTP</h1>
             <p className="text-gray-500 text-sm mt-1">Yearly Training Plan Builder</p>
           </div>
-          <button
-            onClick={() => { setShowAthleteForm(true); setEditingAthleteId(null) }}
-            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2.5 rounded-xl transition-colors shadow-sm"
-          >
-            <Plus size={16} /> New Athlete
-          </button>
+          <div className="flex items-center gap-2">
+            <input ref={fileInputRef} type="file" accept=".json" className="hidden" onChange={handleImportFile} />
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              className="flex items-center gap-2 bg-white hover:bg-gray-50 text-gray-700 font-medium px-4 py-2.5 rounded-xl transition-colors shadow-sm border border-gray-200"
+            >
+              <Upload size={16} /> Import
+            </button>
+            <button
+              onClick={() => { setShowAthleteForm(true); setEditingAthleteId(null) }}
+              className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2.5 rounded-xl transition-colors shadow-sm"
+            >
+              <Plus size={16} /> New Athlete
+            </button>
+          </div>
         </div>
 
         {/* Confirm delete */}
@@ -256,6 +298,73 @@ export function Dashboard({ onOpenPlan }: Props) {
                   Cancel
                 </button>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* Import error */}
+        {importError && (
+          <div className="mb-4 flex items-start justify-between gap-3 bg-red-50 border border-red-200 text-red-800 text-sm rounded-xl px-4 py-3">
+            <span>{importError}</span>
+            <button onClick={() => setImportError(null)} className="shrink-0 text-red-400 hover:text-red-600">✕</button>
+          </div>
+        )}
+
+        {/* Import modal */}
+        {importModal && (
+          <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+            <div className="bg-white rounded-2xl p-6 shadow-xl max-w-sm w-full mx-4 space-y-4">
+              {importModal.duplicate ? (
+                <>
+                  <h3 className="font-bold text-gray-900">Athlete Already Exists</h3>
+                  <p className="text-sm text-gray-600">
+                    <strong>{importModal.data.athlete.name}</strong> ({importModal.data.athlete.weightClass}) is already in your roster. What would you like to do?
+                  </p>
+                  <div className="bg-gray-50 rounded-lg px-3 py-2 text-xs text-gray-500 space-y-0.5">
+                    <div>{importModal.data.plans.length} plan{importModal.data.plans.length !== 1 ? 's' : ''} · {importModal.data.globalEvents.length} event{importModal.data.globalEvents.length !== 1 ? 's' : ''}</div>
+                    <div>Exported {importModal.data.exportDate}</div>
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    <button onClick={() => handleConfirmImport('replace')}
+                      className="bg-orange-600 hover:bg-orange-700 text-white text-sm font-medium px-4 py-2 rounded-lg">
+                      Replace Existing
+                    </button>
+                    <button onClick={() => handleConfirmImport('copy')}
+                      className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-4 py-2 rounded-lg">
+                      Import as Copy
+                    </button>
+                    <button onClick={() => setImportModal(null)}
+                      className="text-sm text-gray-500 px-4 py-2 rounded-lg border border-gray-200 hover:border-gray-300">
+                      Cancel
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <h3 className="font-bold text-gray-900">Import Athlete</h3>
+                  <div className="bg-gray-50 rounded-lg px-3 py-2.5 space-y-1">
+                    <p className="font-semibold text-gray-800">{importModal.data.athlete.name} <span className="font-mono text-xs text-gray-500">{importModal.data.athlete.weightClass}</span></p>
+                    <div className="text-xs text-gray-500 space-y-0.5">
+                      <div>{importModal.data.plans.length} plan{importModal.data.plans.length !== 1 ? 's' : ''} · {importModal.data.plans.reduce((s, p) => s + p.weeks.length, 0)} weeks total</div>
+                      <div>{importModal.data.globalEvents.length} event{importModal.data.globalEvents.length !== 1 ? 's' : ''} (competitions &amp; camps)</div>
+                      {importModal.data.plans[0] && (
+                        <div>Starts {importModal.data.plans[0].startDate}</div>
+                      )}
+                      <div className="text-gray-400">Exported {importModal.data.exportDate}</div>
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <button onClick={() => handleConfirmImport('replace')}
+                      className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-4 py-2 rounded-lg flex-1">
+                      Import
+                    </button>
+                    <button onClick={() => setImportModal(null)}
+                      className="text-sm text-gray-600 px-4 py-2 rounded-lg border border-gray-200 hover:border-gray-300">
+                      Cancel
+                    </button>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         )}
@@ -337,6 +446,13 @@ export function Dashboard({ onOpenPlan }: Props) {
                       </button>
 
                       <div className="flex items-center gap-2 ml-3">
+                        <button
+                          onClick={() => exportAthlete(athlete, plans, globalEvents)}
+                          title="Export athlete data"
+                          className="text-gray-400 hover:text-green-600 p-1.5 rounded-lg hover:bg-green-50 transition-colors"
+                        >
+                          <Download size={15} />
+                        </button>
                         <button
                           onClick={() => { setEditingAthleteId(athlete.id); setExpandedAthleteId(null) }}
                           className="text-xs text-gray-500 hover:text-gray-700 px-3 py-1.5 rounded-lg border border-gray-200 hover:border-gray-300 transition-colors"

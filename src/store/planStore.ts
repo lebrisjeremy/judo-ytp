@@ -25,6 +25,7 @@ interface PlanStore {
   updateWeek: (planId: string, weekNumber: number, patch: Partial<Week>) => void
   updatePlanMode: (planId: string, mode: 'simple' | 'detailed') => void
   updatePlanMeta: (planId: string, patch: Partial<Pick<YearlyPlan, 'title' | 'notes'>>) => void
+  importAthlete: (athlete: Athlete, plans: YearlyPlan[], newGlobalEvents: GlobalEvent[]) => void
 }
 
 export const usePlanStore = create<PlanStore>((set, get) => ({
@@ -166,5 +167,16 @@ export const usePlanStore = create<PlanStore>((set, get) => ({
       return updated
     })
     set({ plans })
+  },
+
+  importAthlete(athlete, plans, newGlobalEvents) {
+    newGlobalEvents.forEach(e => storage.saveGlobalEvent(e))
+    storage.saveAthlete(athlete)
+    plans.forEach(p => storage.savePlan(p))
+    set({
+      athletes: storage.getAthletes(),
+      plans: storage.getPlans(),
+      globalEvents: storage.getGlobalEvents(),
+    })
   },
 }))
