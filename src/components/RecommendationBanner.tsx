@@ -19,7 +19,7 @@ export function RecommendationBanner({ results }: Props) {
           className={`flex items-start gap-3 px-4 py-3 rounded-xl border text-sm ${
             r.level === 'warning'
               ? 'bg-amber-50 border-amber-200 text-amber-800'
-              : 'bg-blue-50 border-blue-200 text-blue-800'
+              : 'bg-slate-50 border-slate-200 text-slate-700'
           }`}>
           {r.level === 'warning'
             ? <AlertTriangle size={15} className="shrink-0 mt-0.5" />

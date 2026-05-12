@@ -80,10 +80,12 @@ function ScheduleModal({ initial, onSave, onClose }: {
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-start justify-center z-50 overflow-y-auto py-6 px-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-          <h2 className="font-bold text-gray-900">{initial ? 'Edit Schedule' : 'New Weekly Schedule'}</h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 p-1.5 rounded-lg hover:bg-gray-100">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden">
+        <div className="flex items-center justify-between px-6 py-4" style={{ background: 'var(--bc-charcoal)', borderBottom: '3px solid var(--bc-red)' }}>
+          <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '1.3rem', letterSpacing: '0.08em', color: '#fff', margin: 0 }}>
+            {initial ? 'EDIT SCHEDULE' : 'NEW WEEKLY SCHEDULE'}
+          </h2>
+          <button onClick={onClose} className="icon-btn-dark" style={{ padding: '0.4rem' }}>
             <X size={18} />
           </button>
         </div>
@@ -92,7 +94,7 @@ function ScheduleModal({ initial, onSave, onClose }: {
           <div>
             <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2 block">Schedule Name</label>
             <input
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-red-600"
               placeholder="e.g. Regular Season, Pre-competition"
               value={name}
               onChange={e => setName(e.target.value)}
@@ -135,7 +137,7 @@ function ScheduleModal({ initial, onSave, onClose }: {
                     ) : (
                       <button
                         onClick={() => setAddingType({ dayIdx })}
-                        className="flex items-center gap-0.5 text-xs text-gray-400 hover:text-blue-600 transition-colors"
+                        className="flex items-center gap-0.5 text-xs text-gray-400 hover:text-red-600 transition-colors"
                       >
                         <Plus size={12} />
                       </button>
@@ -154,7 +156,7 @@ function ScheduleModal({ initial, onSave, onClose }: {
           <button
             onClick={handleSave}
             disabled={!name.trim()}
-            className="px-5 py-2 text-sm font-medium bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors shadow-sm disabled:opacity-50"
+            className="px-5 py-2 text-sm font-medium bg-[var(--bc-red)] hover:bg-[var(--bc-red-dark)] text-white rounded-lg transition-colors shadow-sm disabled:opacity-50"
           >
             Save Schedule
           </button>
@@ -192,7 +194,7 @@ export function ScheduleEditor({ schedules, onSave, onDelete }: Props) {
                 <p className="text-xs text-gray-400 mt-0.5">{sessionSummary(s)}</p>
               </div>
               <div className="flex items-center gap-1 shrink-0">
-                <button onClick={() => openEdit(s)} className="text-gray-400 hover:text-blue-600 p-1 rounded transition-colors">
+                <button onClick={() => openEdit(s)} className="text-gray-400 hover:text-red-600 p-1 rounded transition-colors">
                   <Edit2 size={14} />
                 </button>
                 {confirmDeleteId === s.id ? (
@@ -219,7 +221,7 @@ export function ScheduleEditor({ schedules, onSave, onDelete }: Props) {
 
       <button
         onClick={openNew}
-        className="flex items-center gap-2 text-sm text-gray-400 hover:text-blue-600 px-3 py-2 rounded-lg hover:bg-blue-50 transition-colors"
+        className="flex items-center gap-2 text-sm text-gray-400 hover:text-red-600 px-3 py-2 rounded-lg hover:bg-red-50 transition-colors"
       >
         <Plus size={14} /> New Weekly Schedule
       </button>

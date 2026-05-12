@@ -24,24 +24,24 @@ function PhaseLegend() {
       {phases.map(([p, label]) => (
         <div key={p} className="flex items-center gap-1.5">
           <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: PHASE_COLORS[p] }} />
-          <span className="text-xs text-gray-500">{label}</span>
+          <span className="text-xs" style={{ color: 'var(--judo-muted)' }}>{label}</span>
         </div>
       ))}
-      <div className="flex items-center gap-1.5 ml-2 pl-2 border-l border-gray-200">
+      <div className="flex items-center gap-1.5 ml-2 pl-2" style={{ borderLeft: '1px solid var(--bc-steel)' }}>
         <div className="w-3 h-3 rounded-full bg-yellow-400 border border-yellow-500" />
-        <span className="text-xs text-gray-500">Dev</span>
+        <span className="text-xs" style={{ color: 'var(--judo-muted)' }}>Dev</span>
       </div>
       <div className="flex items-center gap-1.5">
         <div className="w-3 h-3 rounded-full bg-orange-400 border border-orange-500" />
-        <span className="text-xs text-gray-500">Medium</span>
+        <span className="text-xs" style={{ color: 'var(--judo-muted)' }}>Medium</span>
       </div>
       <div className="flex items-center gap-1.5">
         <div className="w-3 h-3 rounded-full bg-red-500 border border-red-600" />
-        <span className="text-xs text-gray-500">Target</span>
+        <span className="text-xs" style={{ color: 'var(--judo-muted)' }}>Target</span>
       </div>
       <div className="flex items-center gap-1.5">
-        <div className="w-3 h-3 rounded-full bg-blue-400 border border-blue-500" />
-        <span className="text-xs text-gray-500">Camp</span>
+        <div className="w-3 h-3 rounded-full bg-slate-400 border border-slate-500" />
+        <span className="text-xs" style={{ color: 'var(--judo-muted)' }}>Camp</span>
       </div>
     </div>
   )
@@ -59,13 +59,30 @@ function PlanStats({ weeks }: { weeks: Week[] }) {
   }, [weeks])
 
   return (
-    <div className="flex gap-4 text-xs text-gray-500">
-      <span><strong className="text-gray-800">{weeks.length}</strong> weeks</span>
-      <span><strong className="text-gray-800">{stats.competitions}</strong> competition weeks</span>
-      <span><strong className="text-gray-800">{stats.totalMatches}</strong> projected matches</span>
+    <div className="flex gap-4 text-xs" style={{ color: 'var(--judo-muted)' }}>
+      <span><strong style={{ color: 'var(--judo-text)' }}>{weeks.length}</strong> weeks</span>
+      <span><strong style={{ color: 'var(--judo-text)' }}>{stats.competitions}</strong> competition weeks</span>
+      <span><strong style={{ color: 'var(--judo-text)' }}>{stats.totalMatches}</strong> projected matches</span>
     </div>
   )
 }
+
+const tabStyle = (active: boolean): React.CSSProperties => ({
+  display: 'flex',
+  alignItems: 'center',
+  gap: '0.375rem',
+  padding: '0.4rem 0.9rem',
+  borderRadius: '0.35rem',
+  fontSize: '0.78rem',
+  fontWeight: 600,
+  fontFamily: 'var(--font-body)',
+  border: 'none',
+  cursor: 'pointer',
+  transition: 'all 0.15s',
+  background: active ? 'var(--bc-red)' : 'transparent',
+  color: active ? '#ffffff' : '#777777',
+  letterSpacing: '0.01em',
+})
 
 export function PlanEditor({ planId, onBack }: Props) {
   const { plans, athletes, globalEvents, updateWeek, updatePlanMode, regeneratePlan } = usePlanStore()
@@ -89,9 +106,9 @@ export function PlanEditor({ planId, onBack }: Props) {
 
   if (!plan || !athlete) {
     return (
-      <div className="min-h-screen flex items-center justify-center text-gray-400">
+      <div className="min-h-screen flex items-center justify-center" style={{ color: 'var(--judo-muted)' }}>
         Plan not found.
-        <button onClick={onBack} className="ml-2 text-blue-500 underline">Go back</button>
+        <button onClick={onBack} className="ml-2 underline" style={{ color: 'var(--bc-red)' }}>Go back</button>
       </div>
     )
   }
@@ -109,106 +126,102 @@ export function PlanEditor({ planId, onBack }: Props) {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Top nav */}
-      <div className="bg-white border-b border-gray-200 sticky top-0 z-30 no-print">
-        <div className="max-w-7xl mx-auto px-4 py-3">
-          <div className="flex items-center justify-between gap-3 flex-wrap">
-            {/* Left: back + title */}
-            <div className="flex items-center gap-3">
-              <button onClick={onBack} className="text-gray-400 hover:text-gray-700 p-1.5 rounded-lg hover:bg-gray-100 transition-colors">
-                <ArrowLeft size={18} />
-              </button>
-              <div>
-                <div className="flex items-center gap-2">
-                  <h1 className="font-bold text-gray-900 text-lg">{athlete.name}</h1>
-                  <span className="text-sm bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full font-mono">{athlete.weightClass}</span>
-                </div>
-                <p className="text-xs text-gray-400">{plan.title}</p>
+    <div className="min-h-screen" style={{ background: 'var(--bc-snow)' }}>
+
+      {/* ── BC-branded sticky top nav ── */}
+      <div className="bc-header sticky top-0 z-30 no-print">
+        <div className="bc-header-inner" style={{ padding: '0.9rem 1.5rem', flexWrap: 'wrap', gap: '0.75rem' }}>
+
+          {/* Left: back + athlete info */}
+          <div className="flex items-center gap-3">
+            <button onClick={onBack} className="icon-btn-dark" style={{ padding: '0.4rem' }}>
+              <ArrowLeft size={17} />
+            </button>
+            <div className="bc-divider-v" />
+            <div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <span style={{ fontFamily: 'var(--font-display)', fontSize: '1.5rem', letterSpacing: '0.08em', color: '#fff', lineHeight: 1 }}>
+                  {athlete.name.toUpperCase()}
+                </span>
+                <span className="badge-weight">{athlete.weightClass}</span>
               </div>
-            </div>
-
-            {/* Center: view toggle */}
-            <div className="flex items-center bg-gray-100 rounded-xl p-1 gap-1">
-              <button onClick={() => setView('list')}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
-                  view === 'list' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
-                }`}>
-                <List size={14} /> Weekly Table
-              </button>
-              <button onClick={() => setView('grid')}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
-                  view === 'grid' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
-                }`}>
-                <LayoutGrid size={14} /> Year Grid
-              </button>
-              <button onClick={() => setView('sessions')}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
-                  view === 'sessions' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
-                }`}>
-                <Dumbbell size={14} /> Sessions
-              </button>
-            </div>
-
-            {/* Right: mode toggle + export */}
-            <div className="flex items-center gap-2">
-              {/* Simple / Detailed toggle */}
-              <button
-                onClick={() => updatePlanMode(planId, plan.planMode === 'simple' ? 'detailed' : 'simple')}
-                className={`flex items-center gap-2 px-3 py-2 rounded-xl border-2 text-sm font-medium transition-all ${
-                  plan.planMode === 'detailed'
-                    ? 'border-purple-400 bg-purple-50 text-purple-700'
-                    : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
-                }`}
-                title="Toggle between Simple (Lowan style) and Detailed (Team BC style) mode"
-              >
-                {plan.planMode === 'detailed'
-                  ? <><ToggleRight size={16} /> Detailed</>
-                  : <><ToggleLeft size={16} /> Simple</>
-                }
-              </button>
-
-              {/* Regenerate from events */}
-              {hasEvents && (
-                <button
-                  onClick={() => setConfirmRegen(true)}
-                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl border-2 border-green-300 bg-green-50 text-sm font-medium text-green-700 hover:bg-green-100 transition-all"
-                  title="Re-generate the plan from the athlete's competition calendar"
-                >
-                  <RefreshCw size={14} /> Regenerate
-                </button>
-              )}
-
-              {/* Export */}
-              <button onClick={handlePdfExport} disabled={exporting}
-                className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-gray-200 bg-white text-sm text-gray-600 hover:bg-gray-50 hover:border-gray-300 transition-all">
-                <Download size={14} /> PDF
-              </button>
-              <button onClick={handleExcelExport} disabled={exporting}
-                className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-gray-200 bg-white text-sm text-gray-600 hover:bg-gray-50 hover:border-gray-300 transition-all">
-                <FileSpreadsheet size={14} /> Excel
-              </button>
+              <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.56rem', letterSpacing: '0.18em', color: '#555', textTransform: 'uppercase', marginTop: '0.25rem' }}>
+                {plan.title}
+              </p>
             </div>
           </div>
+
+          {/* Center: view tabs */}
+          <div style={{ display: 'flex', background: 'rgba(255,255,255,0.05)', borderRadius: '0.5rem', padding: '0.2rem', gap: '0.1rem' }}>
+            <button onClick={() => setView('list')} style={tabStyle(view === 'list')}>
+              <List size={13} /> Weekly Table
+            </button>
+            <button onClick={() => setView('grid')} style={tabStyle(view === 'grid')}>
+              <LayoutGrid size={13} /> Year Grid
+            </button>
+            <button onClick={() => setView('sessions')} style={tabStyle(view === 'sessions')}>
+              <Dumbbell size={13} /> Sessions
+            </button>
+          </div>
+
+          {/* Right: mode toggle + export */}
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => updatePlanMode(planId, plan.planMode === 'simple' ? 'detailed' : 'simple')}
+              className="btn-ghost-dark flex items-center gap-2 px-3 py-1.5"
+              style={{ fontSize: '0.78rem', fontWeight: 600 }}
+              title="Toggle between Simple and Detailed mode"
+            >
+              {plan.planMode === 'detailed'
+                ? <><ToggleRight size={15} /> Detailed</>
+                : <><ToggleLeft size={15} /> Simple</>
+              }
+            </button>
+
+            {hasEvents && (
+              <button
+                onClick={() => setConfirmRegen(true)}
+                className="btn-ghost-dark flex items-center gap-1.5 px-3 py-1.5"
+                style={{ fontSize: '0.78rem', fontWeight: 600, color: '#4ade80', borderColor: 'rgba(74,222,128,0.2)' }}
+                title="Re-generate the plan from the athlete's competition calendar"
+              >
+                <RefreshCw size={13} /> Regenerate
+              </button>
+            )}
+
+            <button onClick={handlePdfExport} disabled={exporting}
+              className="btn-ghost-dark flex items-center gap-1.5 px-3 py-1.5"
+              style={{ fontSize: '0.78rem' }}>
+              <Download size={13} /> PDF
+            </button>
+            <button onClick={handleExcelExport} disabled={exporting}
+              className="btn-ghost-dark flex items-center gap-1.5 px-3 py-1.5"
+              style={{ fontSize: '0.78rem' }}>
+              <FileSpreadsheet size={13} /> Excel
+            </button>
+          </div>
         </div>
+
+        {/* Stats + legend strip */}
+        <div style={{ background: 'var(--bc-charcoal)', borderTop: '1px solid var(--bc-steel)' }} className="no-print">
+          <div className="max-w-7xl mx-auto px-5 py-2 flex items-center justify-between flex-wrap gap-3">
+            <PlanStats weeks={plan.weeks} />
+            <PhaseLegend />
+          </div>
+        </div>
+
+        <div className="bc-red-stripe" />
       </div>
 
-      {/* Stats + legend bar */}
-      <div className="bg-white border-b border-gray-100 no-print">
-        <div className="max-w-7xl mx-auto px-4 py-2 flex items-center justify-between flex-wrap gap-3">
-          <PlanStats weeks={plan.weeks} />
-          <PhaseLegend />
-        </div>
-      </div>
-
-      {/* Main content */}
+      {/* ── Main content ── */}
       <div className="max-w-7xl mx-auto px-4 py-6">
         <RecommendationBanner results={recommendations} />
 
         {view === 'sessions'
           ? <SessionsView plan={plan} athlete={athlete} />
           : view === 'grid'
-            ? <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
+            ? (
+              <div className="bg-white rounded-2xl border shadow-sm p-5" style={{ borderColor: 'var(--bc-border)' }}>
                 <YearGrid
                   weeks={plan.weeks}
                   planMode={plan.planMode}
@@ -216,6 +229,7 @@ export function PlanEditor({ planId, onBack }: Props) {
                   athlete={athlete}
                 />
               </div>
+            )
             : <WeekList
                 weeks={plan.weeks}
                 planMode={plan.planMode}
@@ -229,10 +243,10 @@ export function PlanEditor({ planId, onBack }: Props) {
           {(Object.entries(PHASE_LABELS) as [Week['seasonPhase'], string][]).map(([phase, label]) => {
             const count = plan.weeks.filter(w => w.seasonPhase === phase).length
             return (
-              <div key={phase} className="bg-white rounded-xl border border-gray-200 p-3 text-center shadow-sm">
-                <div className={`w-8 h-2 rounded-full mx-auto mb-1.5`} style={{ backgroundColor: PHASE_COLORS[phase] }} />
-                <div className="text-lg font-bold text-gray-900">{count}</div>
-                <div className="text-xs text-gray-400">{label.split(' ')[0]}</div>
+              <div key={phase} className="bg-white rounded-xl border p-3 text-center shadow-sm" style={{ borderColor: 'var(--bc-border)' }}>
+                <div className="w-8 h-2 rounded-full mx-auto mb-1.5" style={{ backgroundColor: PHASE_COLORS[phase] }} />
+                <div className="text-lg font-bold" style={{ color: 'var(--bc-text)' }}>{count}</div>
+                <div className="text-xs" style={{ color: 'var(--bc-muted)' }}>{label.split(' ')[0]}</div>
               </div>
             )
           })}
@@ -253,22 +267,22 @@ export function PlanEditor({ planId, onBack }: Props) {
 
       {/* Regenerate confirmation */}
       {confirmRegen && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-          <div className="bg-white rounded-2xl p-6 shadow-xl max-w-sm w-full mx-4">
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl p-6 shadow-2xl max-w-sm w-full mx-4" style={{ border: '1px solid var(--bc-border)' }}>
             <div className="flex items-center gap-2 mb-3">
-              <RefreshCw size={18} className="text-green-600" />
+              <RefreshCw size={18} style={{ color: 'var(--bc-red)' }} />
               <h3 className="font-bold text-gray-900">Regenerate Plan</h3>
             </div>
             <p className="text-sm text-gray-600 mb-1">
               This will recalculate all 52 weeks — phases, volume, and intensity — based on the current competition calendar.
             </p>
-            <p className="text-sm text-amber-600 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mt-3 mb-4">
+            <p className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mt-3 mb-4">
               Any manual edits to individual weeks will be overwritten.
             </p>
             <div className="flex gap-2">
               <button
                 onClick={() => { regeneratePlan(planId); setConfirmRegen(false) }}
-                className="bg-green-600 hover:bg-green-700 text-white text-sm font-medium px-4 py-2 rounded-lg flex items-center gap-1.5"
+                className="btn-primary text-white text-sm font-medium px-4 py-2 rounded-lg flex items-center gap-1.5"
               >
                 <RefreshCw size={14} /> Regenerate
               </button>

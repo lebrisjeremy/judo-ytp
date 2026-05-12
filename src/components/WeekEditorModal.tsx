@@ -53,13 +53,13 @@ function CompetitionEditor({ label, value, onChange }: {
         <span className="text-sm font-medium text-gray-700">{label}</span>
         <label className="flex items-center gap-2 cursor-pointer">
           <input type="checkbox" checked={enabled} onChange={e => setEnabled(e.target.checked)}
-            className="w-4 h-4 rounded accent-blue-600" />
+            className="w-4 h-4 rounded accent-red-600" />
           <span className="text-xs text-gray-500">Has event</span>
         </label>
       </div>
       {enabled && (
         <div className="space-y-2">
-          <input className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+          <input className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-red-600"
             placeholder="Event name" value={name} onChange={e => setName(e.target.value)} />
           <div className="grid grid-cols-2 gap-2">
             <div>
@@ -127,16 +127,22 @@ export function WeekEditorModal({ week, planMode, showWeightCycles, showCardioCy
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-start justify-center z-50 overflow-y-auto py-6 px-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl">
-        {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-          <div>
-            <h2 className="font-bold text-gray-900">Week {week.weekNumber}</h2>
-            <p className="text-xs text-gray-500 mt-0.5">{weekRange(week.startDate, week.endDate)}</p>
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden">
+        {/* Dark header */}
+        <div style={{ background: 'var(--bc-charcoal)', borderBottom: '3px solid var(--bc-red)' }}>
+          <div className="flex items-center justify-between px-6 py-4">
+            <div>
+              <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '1.5rem', letterSpacing: '0.08em', color: '#fff', lineHeight: 1, margin: 0 }}>
+                WEEK {week.weekNumber}
+              </h2>
+              <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6rem', letterSpacing: '0.1em', color: '#666', marginTop: '0.3rem' }}>
+                {weekRange(week.startDate, week.endDate).toUpperCase()}
+              </p>
+            </div>
+            <button onClick={onClose} className="icon-btn-dark" style={{ padding: '0.4rem' }}>
+              <X size={18} />
+            </button>
           </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 p-1.5 rounded-lg hover:bg-gray-100">
-            <X size={18} />
-          </button>
         </div>
 
         <div className="px-6 py-5 space-y-5">
@@ -241,7 +247,7 @@ export function WeekEditorModal({ week, planMode, showWeightCycles, showCardioCy
                   <div key={key}>
                     <label className="text-xs text-gray-500 mb-1 block">{label}</label>
                     <input type="number" min={0} max={7}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-red-600"
                       value={(sessions[key] as number) || ''}
                       onChange={e => setSessions({ ...sessions, [key]: Number(e.target.value) })}
                       placeholder="0" />
@@ -252,7 +258,7 @@ export function WeekEditorModal({ week, planMode, showWeightCycles, showCardioCy
                     <label key={key} className="flex items-center gap-2 cursor-pointer">
                       <input type="checkbox" checked={sessions[key]}
                         onChange={e => setSessions({ ...sessions, [key]: e.target.checked })}
-                        className="w-4 h-4 accent-blue-600 rounded" />
+                        className="w-4 h-4 accent-red-600 rounded" />
                       <span className="text-sm text-gray-600 capitalize">{key === 'physicalTesting' ? 'Physical Testing' : 'Tournament'}</span>
                     </label>
                   ))}
@@ -286,7 +292,7 @@ export function WeekEditorModal({ week, planMode, showWeightCycles, showCardioCy
           {/* Mandala Focus */}
           <div>
             <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2 block">Mandala / Focus</label>
-            <input className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+            <input className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-red-600"
               placeholder="e.g. uchimata | Grip strength | Mental reset"
               value={mandalaFocus} onChange={e => setMandalaFocus(e.target.value)} />
           </div>
@@ -294,7 +300,7 @@ export function WeekEditorModal({ week, planMode, showWeightCycles, showCardioCy
           {/* Notes */}
           <div>
             <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2 block">Notes</label>
-            <textarea className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+            <textarea className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-red-600 resize-none"
               rows={2} placeholder="Coach notes, observations, adjustments..."
               value={notes} onChange={e => setNotes(e.target.value)} />
           </div>
@@ -305,7 +311,7 @@ export function WeekEditorModal({ week, planMode, showWeightCycles, showCardioCy
           <button onClick={onClose} className="px-4 py-2 text-sm text-gray-600 border border-gray-200 rounded-lg hover:border-gray-300 transition-colors">
             Cancel
           </button>
-          <button onClick={handleSave} className="px-5 py-2 text-sm font-medium bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors shadow-sm">
+          <button onClick={handleSave} className="btn-primary px-5 py-2 text-sm font-medium text-white rounded-lg shadow-sm">
             Save Week
           </button>
         </div>

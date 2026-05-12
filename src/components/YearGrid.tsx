@@ -37,14 +37,14 @@ function BarScale({ level, color }: { level: number; color: string }) {
         {[5, 4, 3, 2, 1].map(n => (
           <div key={n} style={{
             flex: 1,
-            backgroundColor: n <= level ? color : '#e5e7eb',
+            backgroundColor: n <= level ? color : '#e8e3de',
             borderRadius: 2,
           }} />
         ))}
       </div>
       <div style={{
         height: LABEL_H, display: 'flex', alignItems: 'center', justifyContent: 'center',
-        fontSize: 9, fontFamily: 'monospace', fontWeight: 700, color: '#4b5563',
+        fontSize: 9, fontFamily: 'monospace', fontWeight: 700, color: '#6e6e6e',
       }}>
         {level}
       </div>
@@ -76,8 +76,8 @@ export const YearGrid = forwardRef<HTMLDivElement, Props>(function YearGrid(
         <div className="flex" style={{ paddingLeft: LABEL_W }}>
           {groups.map(g => (
             <div key={g.month}
-              style={{ width: g.weeks.length * COL }}
-              className="text-xs font-semibold text-gray-500 uppercase tracking-wide border-l border-gray-200 pl-1 py-1">
+              style={{ width: g.weeks.length * COL, color: 'var(--bc-muted)', borderLeft: '1px solid var(--bc-border)' }}
+              className="text-xs font-semibold uppercase tracking-wide pl-1 py-1">
               {g.month.slice(0, 3)}
             </div>
           ))}
@@ -85,10 +85,10 @@ export const YearGrid = forwardRef<HTMLDivElement, Props>(function YearGrid(
 
         {/* Week numbers */}
         <div className="flex items-center border-t border-gray-200">
-          <div className="shrink-0 text-xs text-gray-400 font-medium pr-2 text-right" style={{ width: LABEL_W }}>Week</div>
+          <div className="shrink-0 text-xs font-medium pr-2 text-right" style={{ color: '#777', width: LABEL_W }}>Week</div>
           {weeks.map(w => (
-            <div key={w.weekNumber} style={{ width: COL }}
-              className="text-center text-xs text-gray-400 border-l border-gray-100 py-0.5 font-mono">
+            <div key={w.weekNumber} style={{ width: COL, borderLeft: '1px solid var(--bc-border)' }}
+              className="text-center text-xs text-gray-400 py-0.5 font-mono">
               {w.weekNumber}
             </div>
           ))}
@@ -96,7 +96,7 @@ export const YearGrid = forwardRef<HTMLDivElement, Props>(function YearGrid(
 
         {/* Phase */}
         <div className="flex items-center">
-          <div className="shrink-0 text-xs text-gray-500 font-medium pr-2 text-right" style={{ width: LABEL_W }}>Phase</div>
+          <div className="shrink-0 text-xs font-medium pr-2 text-right" style={{ color: 'var(--bc-muted)', width: LABEL_W }}>Phase</div>
           {weeks.map(w => (
             <button key={w.weekNumber}
               onClick={() => onEditWeek(w.weekNumber)}
@@ -109,8 +109,8 @@ export const YearGrid = forwardRef<HTMLDivElement, Props>(function YearGrid(
 
         {/* Events — colored background + vertical name */}
         <div className="flex">
-          <div className="shrink-0 text-xs text-gray-500 font-medium pr-2 text-right"
-            style={{ width: LABEL_W, height: eventRowH, display: 'flex', alignItems: 'flex-end', paddingBottom: 4 }}>
+          <div className="shrink-0 text-xs font-medium pr-2 text-right"
+            style={{ color: 'var(--bc-muted)', width: LABEL_W, height: eventRowH, display: 'flex', alignItems: 'flex-end', paddingBottom: 4 }}>
             Events
           </div>
           {weeks.map(w => {
@@ -118,7 +118,7 @@ export const YearGrid = forwardRef<HTMLDivElement, Props>(function YearGrid(
             const bgColor = evt
               ? evt.type === 'target' ? '#ef4444'
                 : evt.type === 'medium' ? '#f97316'
-                : evt.type === 'camp' ? '#3b82f6'
+                : evt.type === 'camp' ? '#64748b'
                 : '#f59e0b'
               : w.physicalTestingProposed ? '#0891b2'
               : 'transparent'
@@ -128,8 +128,8 @@ export const YearGrid = forwardRef<HTMLDivElement, Props>(function YearGrid(
               <div key={w.weekNumber}
                 title={evt ? `${evt.name} ${IMPORTANCE_STARS[evt.importance - 1]}` : undefined}
                 style={{ width: COL, height: eventRowH, backgroundColor: bgColor, overflow: 'hidden',
-                         display: 'flex', justifyContent: 'center', alignItems: 'flex-end', paddingBottom: 4 }}
-                className="border-l border-gray-200">
+                         display: 'flex', justifyContent: 'center', alignItems: 'flex-end', paddingBottom: 4,
+                         borderLeft: '1px solid var(--bc-border)' }}>
                 {label && (
                   <span style={{
                     writingMode: 'vertical-lr',
@@ -151,10 +151,10 @@ export const YearGrid = forwardRef<HTMLDivElement, Props>(function YearGrid(
         {/* Travel */}
         {weeks.some(w => w.travelNote) && (
           <div className="flex items-center">
-            <div className="shrink-0 text-xs text-gray-500 font-medium pr-2 text-right" style={{ width: LABEL_W }}>Travel</div>
+            <div className="shrink-0 text-xs font-medium pr-2 text-right" style={{ color: 'var(--bc-muted)', width: LABEL_W }}>Travel</div>
             {weeks.map(w => (
-              <div key={w.weekNumber} style={{ width: COL }}
-                className="h-6 border-l border-gray-100 flex items-center justify-center">
+              <div key={w.weekNumber} style={{ width: COL, borderLeft: '1px solid var(--bc-border)' }}
+                className="h-6 flex items-center justify-center">
                 {w.travelNote && (
                   <div
                     title={w.travelNote === 'travel-before' ? 'Travel to event' : 'Travel/Recovery'}
@@ -183,7 +183,7 @@ export const YearGrid = forwardRef<HTMLDivElement, Props>(function YearGrid(
           <div className="shrink-0 text-xs text-gray-500 font-medium pr-2 text-right flex items-center" style={{ width: LABEL_W }}>Intensity</div>
           {weeks.map(w => (
             <div key={w.weekNumber} style={{ width: COL }}>
-              <BarScale level={w.intensity} color="#3b82f6" />
+              <BarScale level={w.intensity} color="#c0392b" />
             </div>
           ))}
         </div>
@@ -195,10 +195,10 @@ export const YearGrid = forwardRef<HTMLDivElement, Props>(function YearGrid(
               const labels = ['Randori', 'Technical', 'S&C', 'Cardio']
               return (
                 <div key={key} className="flex items-center">
-                  <div className="shrink-0 text-xs text-gray-400 font-medium pr-2 text-right" style={{ width: LABEL_W }}>{labels[i]}</div>
+                  <div className="shrink-0 text-xs font-medium pr-2 text-right" style={{ color: '#777', width: LABEL_W }}>{labels[i]}</div>
                   {weeks.map(w => (
-                    <div key={w.weekNumber} style={{ width: COL }}
-                      className="h-6 border-l border-gray-100 flex items-center justify-center text-xs text-gray-500 font-mono">
+                    <div key={w.weekNumber}
+                      className="h-6 flex items-center justify-center text-xs text-gray-500 font-mono" style={{ borderLeft: '1px solid var(--bc-border)', width: COL }}>
                       {(w.sessions?.[key] ?? 0) || ''}
                     </div>
                   ))}
@@ -206,13 +206,13 @@ export const YearGrid = forwardRef<HTMLDivElement, Props>(function YearGrid(
               )
             })}
             <div className="flex items-center">
-              <div className="shrink-0 text-xs text-gray-400 font-medium pr-2 text-right" style={{ width: LABEL_W }}>Testing / Pre-comp</div>
+              <div className="shrink-0 text-xs font-medium pr-2 text-right" style={{ color: '#777', width: LABEL_W }}>Testing / Pre-comp</div>
               {weeks.map(w => {
                 const hasTest = w.sessions?.physicalTesting || w.physicalTestingProposed
                 const hasPreComp = w.preCompSession
                 return (
-                  <div key={w.weekNumber} style={{ width: COL }}
-                    className="h-6 border-l border-gray-100 flex items-center justify-center gap-0.5 text-xs font-bold">
+                  <div key={w.weekNumber}
+                    className="h-6 flex items-center justify-center gap-0.5 text-xs font-bold" style={{ borderLeft: '1px solid var(--bc-border)', width: COL }}>
                     {hasTest && <span className="text-cyan-600">T</span>}
                     {hasPreComp && <span className="text-amber-500">P</span>}
                   </div>
@@ -225,12 +225,12 @@ export const YearGrid = forwardRef<HTMLDivElement, Props>(function YearGrid(
         {/* Weight Cycles */}
         {athlete?.showWeightCycles && (
           <div className="flex items-center mt-1">
-            <div className="shrink-0 text-xs text-gray-500 font-medium pr-2 text-right" style={{ width: LABEL_W }}>Weight</div>
+            <div className="shrink-0 text-xs font-medium pr-2 text-right" style={{ color: 'var(--bc-muted)', width: LABEL_W }}>Weight</div>
             {weeks.map(w => (
               <div key={w.weekNumber}
                 title={w.weightCycle ? WEIGHT_CYCLE_LABELS[w.weightCycle] : undefined}
-                style={{ width: COL, backgroundColor: w.weightCycle ? WEIGHT_CYCLE_COLORS[w.weightCycle] + '40' : 'transparent' }}
-                className="h-6 border-l border-gray-100 flex items-center justify-center">
+                style={{ width: COL, backgroundColor: w.weightCycle ? WEIGHT_CYCLE_COLORS[w.weightCycle] + '40' : 'transparent', borderLeft: '1px solid var(--bc-border)' }}
+                className="h-6 flex items-center justify-center">
                 {w.weightCycle && (
                   <span className="font-mono font-bold" style={{ fontSize: 7, color: WEIGHT_CYCLE_COLORS[w.weightCycle] }}>
                     {WEIGHT_CYCLE_SHORT[w.weightCycle]}
@@ -244,12 +244,12 @@ export const YearGrid = forwardRef<HTMLDivElement, Props>(function YearGrid(
         {/* Cardio Cycles */}
         {athlete?.showCardioCycles && (
           <div className="flex items-center">
-            <div className="shrink-0 text-xs text-gray-500 font-medium pr-2 text-right" style={{ width: LABEL_W }}>Cardio</div>
+            <div className="shrink-0 text-xs font-medium pr-2 text-right" style={{ color: 'var(--bc-muted)', width: LABEL_W }}>Cardio</div>
             {weeks.map(w => (
               <div key={w.weekNumber}
                 title={w.cardioCycle ? CARDIO_CYCLE_LABELS[w.cardioCycle] : undefined}
-                style={{ width: COL, backgroundColor: w.cardioCycle ? CARDIO_CYCLE_COLORS[w.cardioCycle] + '40' : 'transparent' }}
-                className="h-6 border-l border-gray-100 flex items-center justify-center">
+                style={{ width: COL, backgroundColor: w.cardioCycle ? CARDIO_CYCLE_COLORS[w.cardioCycle] + '40' : 'transparent', borderLeft: '1px solid var(--bc-border)' }}
+                className="h-6 flex items-center justify-center">
                 {w.cardioCycle && (
                   <span className="font-mono font-bold" style={{ fontSize: 7, color: CARDIO_CYCLE_COLORS[w.cardioCycle] }}>
                     {CARDIO_CYCLE_SHORT[w.cardioCycle]}
@@ -260,7 +260,7 @@ export const YearGrid = forwardRef<HTMLDivElement, Props>(function YearGrid(
           </div>
         )}
 
-        <p className="text-xs text-gray-400 mt-3" style={{ paddingLeft: LABEL_W }}>
+        <p className="text-xs mt-3" style={{ paddingLeft: LABEL_W, color: '#888' }}>
           Click any phase cell to edit a week · <span className="text-cyan-600 font-medium">T</span> = physical testing · <span className="text-amber-500 font-medium">P</span> = pre-comp session · <span className="font-medium" style={{ color: '#94a3b8' }}>Travel/Return</span> = travel days
         </p>
       </div>
