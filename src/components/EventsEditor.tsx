@@ -1,6 +1,5 @@
 import { useState, useMemo } from 'react'
 import type { GlobalEvent, AthleteEventRef, AthleteEventType } from '../types'
-import { IMPORTANCE_STARS } from '../types'
 import { format, parseISO } from 'date-fns'
 import { Plus, Trash2, Pencil, Trophy, Tent, ChevronDown, ChevronUp, Search, X } from 'lucide-react'
 
@@ -384,13 +383,13 @@ export function EventsEditor({ refs, globalEvents, onChangeRefs, onSaveGlobalEve
                             key={i}
                             onClick={() => setImportance(ge.id, i)}
                             title={IMPORTANCE_LABELS[i]}
-                            className={`w-7 h-7 rounded-lg text-xs font-bold transition-all ${
-                              ref.importance === i
+                            className={`w-7 h-7 rounded-lg text-sm font-bold transition-all ${
+                              i <= ref.importance
                                 ? isComp ? 'bg-red-500 text-white shadow-sm' : 'bg-slate-500 text-white shadow-sm'
-                                : 'bg-white border border-gray-200 text-gray-500 hover:bg-gray-100'
+                                : 'bg-white border border-gray-200 text-gray-400 hover:bg-gray-100'
                             }`}
                           >
-                            {IMPORTANCE_STARS[i - 1]}
+                            ★
                           </button>
                         ))}
                       </div>

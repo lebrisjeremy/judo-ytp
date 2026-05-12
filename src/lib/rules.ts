@@ -27,10 +27,12 @@ export function checkEventDensity(events: AthleteEvent[]): RuleResult | null {
   for (let i = 0; i < comps.length - 2; i++) {
     const span = differenceInWeeks(parseISO(comps[i + 2].startDate), parseISO(comps[i].startDate))
     if (span <= 3) {
+      const names = [comps[i].name, comps[i + 1].name, comps[i + 2].name].join(', ')
+      const spanLabel = span === 0 ? 'the same week' : `${span} week${span === 1 ? '' : 's'}`
       return {
         id: 'event-density',
         level: 'warning',
-        message: `3 competitions within ${span} weeks detected. Consider spacing events to allow proper recovery and peaking.`,
+        message: `3 competitions within ${spanLabel}: ${names}. Consider spacing events to allow proper recovery and peaking.`,
       }
     }
   }
