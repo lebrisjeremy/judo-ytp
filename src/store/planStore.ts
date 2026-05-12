@@ -100,7 +100,7 @@ interface PlanStore {
   updateWeek: (planId: string, weekNumber: number, patch: Partial<Week>) => Promise<void>
   updatePlanMode: (planId: string, mode: 'simple' | 'detailed') => Promise<void>
   updatePlanMeta: (planId: string, patch: Partial<Pick<YearlyPlan, 'title' | 'notes'>>) => Promise<void>
-  importAthlete: (athlete: Athlete, plans: YearlyPlan[], newGlobalEvents: GlobalEvent[]) => Promise<void>
+  importAthlete: (athlete: Athlete, plans: YearlyPlan[], newGlobalEvents: GlobalEvent[], newSchedule?: WeeklySchedule) => Promise<void>
 }
 
 // ---------------------------------------------------------------------------
@@ -360,7 +360,7 @@ export const usePlanStore = create<PlanStore>((set, get) => ({
     set({ plans: get().plans.map(p => p.id === planId ? updated : p) })
   },
 
-  async importAthlete(athlete, plans, newGlobalEvents) {
+  async importAthlete(athlete, plans, newGlobalEvents, newSchedule) {
     const userId = get().user?.id
     if (!userId) return
     await Promise.all([
@@ -371,12 +371,17 @@ export const usePlanStore = create<PlanStore>((set, get) => ({
       ...plans.map(p =>
         supabase.from('yearly_plans').upsert({ id: p.id, user_id: userId, athlete_id: p.athleteId, data: p })
       ),
+      ...(newSchedule
+        ? [supabase.from('weekly_schedules').upsert({ id: newSchedule.id, user_id: userId, data: newSchedule })]
+        : []
+      ),
     ])
-    const [athletes, updatedPlans, globalEvents] = await Promise.all([
+    const [athletes, updatedPlans, globalEvents, weeklySchedules] = await Promise.all([
       fetchAthletes(userId),
       fetchPlans(userId),
       fetchGlobalEvents(userId),
+      fetchSchedules(userId),
     ])
-    set({ athletes, plans: updatedPlans, globalEvents })
+    set({ athletes, plans: updatedPlans, globalEvents, weeklySchedules })
   },
 }))

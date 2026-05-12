@@ -242,10 +242,10 @@ export function Dashboard({ onOpenPlan }: Props) {
 
   function handleConfirmImport(mode: 'replace' | 'copy' | 'new') {
     if (!importModal) return
-    const { athlete, plans: newPlans, newGlobalEvents } = resolveImport(
-      importModal.data, globalEvents, mode
+    const { athlete, plans: newPlans, newGlobalEvents, newSchedule } = resolveImport(
+      importModal.data, globalEvents, weeklySchedules, mode
     )
-    importAthlete(athlete, newPlans, newGlobalEvents)
+    importAthlete(athlete, newPlans, newGlobalEvents, newSchedule)
     setImportModal(null)
     setExpandedAthleteId(athlete.id)
   }
@@ -490,7 +490,7 @@ export function Dashboard({ onOpenPlan }: Props) {
 
                       <div className="flex items-center gap-1.5 ml-3 shrink-0">
                         <button
-                          onClick={() => exportAthlete(athlete, plans, globalEvents)}
+                          onClick={() => exportAthlete(athlete, plans, globalEvents, weeklySchedules)}
                           title="Export athlete data"
                           className="icon-btn-dark success"
                         >
