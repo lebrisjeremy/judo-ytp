@@ -38,7 +38,7 @@ export function weekLabel(startDate: string): string {
 }
 
 export function monthOf(startDate: string): string {
-  return format(parseISO(startDate), 'MMMM')
+  return format(parseISO(startDate), 'MMMM yyyy')
 }
 
 export function shortDate(dateStr: string): string {
