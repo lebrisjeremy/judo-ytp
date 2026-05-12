@@ -6,7 +6,7 @@ import { generateCardioSession, generateWeightSession, cardioSessionCount, weigh
 import { exportSessionPdf, exportWeekSessionsPdf, exportAllSessionsPdf } from '../lib/sessionpdf'
 import { weekRange } from '../lib/dates'
 import { format } from 'date-fns'
-import { Download, RefreshCw, ChevronDown, ChevronUp, Dumbbell, Activity } from 'lucide-react'
+import { Download, RefreshCw, ChevronDown, ChevronUp, Dumbbell, Activity, Trash2 } from 'lucide-react'
 
 interface Props {
   plan: YearlyPlan
@@ -25,14 +25,17 @@ function SessionCard({
   plan,
   athlete,
   onRegenerate,
+  onDelete,
 }: {
   session: GeneratedSession
   plan: YearlyPlan
   athlete: Athlete
   onRegenerate: () => void
+  onDelete: () => void
 }) {
   const [expanded, setExpanded] = useState(false)
   const [confirmRegen, setConfirmRegen] = useState(false)
+  const [confirmDelete, setConfirmDelete] = useState(false)
   const c = session.content
   const isCardio = session.sessionType === 'cardio'
 
@@ -67,10 +70,17 @@ function SessionCard({
           </button>
           <button
             onClick={e => { e.stopPropagation(); handleRegen() }}
-            className="text-gray-400 hover:text-blue-600 p-1.5 rounded-lg hover:bg-blue-50 transition-colors"
+            className="text-gray-400 hover:text-red-600 p-1.5 rounded-lg hover:bg-red-50 transition-colors"
             title="Regenerate session"
           >
             <RefreshCw size={14} />
+          </button>
+          <button
+            onClick={e => { e.stopPropagation(); setConfirmDelete(true) }}
+            className="text-gray-400 hover:text-red-500 p-1.5 rounded-lg hover:bg-red-50 transition-colors"
+            title="Delete session"
+          >
+            <Trash2 size={14} />
           </button>
           {expanded ? <ChevronUp size={14} className="text-gray-400" /> : <ChevronDown size={14} className="text-gray-400" />}
         </div>
@@ -136,6 +146,23 @@ function SessionCard({
           </div>
         </div>
       )}
+
+      {/* Delete confirm */}
+      {confirmDelete && (
+        <div className="px-4 pb-4 border-t border-red-100 bg-red-50 flex items-center justify-between gap-3">
+          <p className="text-xs text-red-800">Delete this session? It won't regenerate automatically.</p>
+          <div className="flex gap-2 shrink-0">
+            <button onClick={() => { onDelete(); setConfirmDelete(false) }}
+              className="text-xs bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 rounded-lg">
+              Delete
+            </button>
+            <button onClick={() => setConfirmDelete(false)}
+              className="text-xs text-gray-600 px-3 py-1.5 rounded-lg border border-gray-200">
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -176,7 +203,7 @@ function WeekSelector({
             title={weekRange(w.startDate, w.endDate)}
             className={`w-9 h-9 rounded-lg text-xs font-mono font-semibold transition-all border-2 relative ${
               isSel
-                ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
+                ? 'bg-slate-700 text-white border-slate-700 shadow-sm'
                 : 'bg-white text-gray-600 border-gray-200 hover:border-blue-300'
             }`}
             style={!isSel ? { borderColor: PHASE_COLORS[w.seasonPhase] + '60' } : undefined}
@@ -193,7 +220,7 @@ function WeekSelector({
 }
 
 export function SessionsView({ plan, athlete }: Props) {
-  const { generatedSessions, saveGeneratedSession } = usePlanStore()
+  const { generatedSessions, saveGeneratedSession, deleteGeneratedSession } = usePlanStore()
   const [selectedWeekNum, setSelectedWeekNum] = useState(plan.weeks[0]?.weekNumber ?? 1)
 
   const planSessions = generatedSessions.filter(s => s.planId === plan.id)
@@ -331,7 +358,7 @@ export function SessionsView({ plan, athlete }: Props) {
               )}
               <button
                 onClick={generateWeek}
-                className="flex items-center gap-1.5 text-xs text-white bg-blue-600 hover:bg-blue-700 px-3 py-1.5 rounded-lg transition-colors"
+                className="flex items-center gap-1.5 text-xs text-white bg-[var(--bc-red)] hover:bg-[var(--bc-red-dark)] px-3 py-1.5 rounded-lg transition-colors"
               >
                 <RefreshCw size={13} /> {hasWeekSessions ? 'Re-generate Week' : 'Generate Week'}
               </button>
@@ -351,7 +378,8 @@ export function SessionsView({ plan, athlete }: Props) {
             )}
             {cardioSessions.map(s => (
               <SessionCard key={s.id} session={s} plan={plan} athlete={athlete}
-                onRegenerate={() => regenSession(s)} />
+                onRegenerate={() => regenSession(s)}
+                onDelete={() => deleteGeneratedSession(s.id)} />
             ))}
           </div>
           <div className="space-y-3">
@@ -362,7 +390,8 @@ export function SessionsView({ plan, athlete }: Props) {
             )}
             {weightSessions.map(s => (
               <SessionCard key={s.id} session={s} plan={plan} athlete={athlete}
-                onRegenerate={() => regenSession(s)} />
+                onRegenerate={() => regenSession(s)}
+                onDelete={() => deleteGeneratedSession(s.id)} />
             ))}
           </div>
         </div>
@@ -373,7 +402,7 @@ export function SessionsView({ plan, athlete }: Props) {
           <p className="text-xs mt-1 mb-4">Click "Generate Week" to create cardio and weight sessions based on the YTP.</p>
           <button
             onClick={generateWeek}
-            className="inline-flex items-center gap-1.5 text-sm text-white bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg transition-colors"
+            className="inline-flex items-center gap-1.5 text-sm text-white bg-[var(--bc-red)] hover:bg-[var(--bc-red-dark)] px-4 py-2 rounded-lg transition-colors"
           >
             <RefreshCw size={14} /> Generate Week {selectedWeekNum}
           </button>

@@ -3,7 +3,8 @@ import { usePlanStore } from '../store/planStore'
 import type { Athlete } from '../types'
 import { EventsEditor } from './EventsEditor'
 import { ScheduleEditor } from './ScheduleEditor'
-import { Plus, Trash2, ChevronRight, User, Calendar, Wand2, ChevronDown, ChevronUp, Download, Upload, ClipboardList } from 'lucide-react'
+import { JudoBCLogo } from './Logos'
+import { Plus, Trash2, ChevronRight, Calendar, Wand2, ChevronDown, ChevronUp, Download, Upload, ClipboardList } from 'lucide-react'
 import { format } from 'date-fns'
 import { exportAthlete, validateImport, resolveImport } from '../lib/exportImport'
 import type { AthleteExport } from '../lib/exportImport'
@@ -42,27 +43,27 @@ function AthleteForm({ onSave, onCancel, initial }: {
       <div className="grid grid-cols-2 gap-3">
         <div>
           <label className="text-xs font-medium text-gray-600">Name *</label>
-          <input className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+          <input className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-red-600 outline-none"
             value={name} onChange={e => setName(e.target.value)} placeholder="Athlete name" />
         </div>
         <div>
           <label className="text-xs font-medium text-gray-600">Weight Class *</label>
-          <input className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+          <input className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-red-600 outline-none"
             value={weightClass} onChange={e => setWeightClass(e.target.value)} placeholder="-73kg" />
         </div>
         <div>
           <label className="text-xs font-medium text-gray-600">Team</label>
-          <input className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+          <input className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-red-600 outline-none"
             value={team} onChange={e => setTeam(e.target.value)} placeholder="Team BC" />
         </div>
         <div>
           <label className="text-xs font-medium text-gray-600">Club</label>
-          <input className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+          <input className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-red-600 outline-none"
             value={club} onChange={e => setClub(e.target.value)} placeholder="Judo BC" />
         </div>
         <div>
           <label className="text-xs font-medium text-gray-600">Competition Level</label>
-          <select className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+          <select className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-red-600 outline-none"
             value={level} onChange={e => setLevel(e.target.value as NonNullable<Athlete['level']>)}>
             <option value="cadet">Cadet</option>
             <option value="junior">Junior</option>
@@ -75,7 +76,7 @@ function AthleteForm({ onSave, onCancel, initial }: {
         <div>
           <label className="text-xs font-medium text-gray-600">S&C Training Age (years)</label>
           <input type="number" min={0} max={20}
-            className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+            className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-red-600 outline-none"
             value={trainingAge} onChange={e => setTrainingAge(Number(e.target.value))} />
         </div>
       </div>
@@ -124,7 +125,7 @@ function AthleteForm({ onSave, onCancel, initial }: {
             showWeightCycles,
             showCardioCycles,
           })
-        }} className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors">
+        }} className="text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors btn-primary">
           Save Athlete
         </button>
         <button onClick={onCancel} className="text-sm text-gray-600 px-4 py-2 rounded-lg border border-gray-200 hover:border-gray-300 transition-colors">
@@ -150,26 +151,26 @@ function NewPlanForm({ hasEvents, onSave, onCancel }: {
       <div className="grid grid-cols-2 gap-3">
         <div>
           <label className="text-xs font-medium text-gray-600">Plan Title</label>
-          <input className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+          <input className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-red-600 outline-none"
             value={title} onChange={e => setTitle(e.target.value)} />
         </div>
         <div>
           <label className="text-xs font-medium text-gray-600">Start Date (Monday)</label>
-          <input type="date" className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+          <input type="date" className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-red-600 outline-none"
             value={startDate} onChange={e => setStartDate(e.target.value)} />
         </div>
       </div>
 
       {hasEvents && (
         <label className="flex items-center gap-3 cursor-pointer p-3 rounded-lg border-2 border-dashed transition-colors hover:bg-white
-          border-blue-300 bg-blue-50">
+          border-red-300 bg-red-50">
           <input type="checkbox" checked={autoGenerate} onChange={e => setAutoGenerate(e.target.checked)}
-            className="w-4 h-4 accent-blue-600 rounded" />
+            className="w-4 h-4 accent-red-600 rounded" />
           <div>
-            <div className="flex items-center gap-1.5 text-sm font-medium text-blue-800">
+            <div className="flex items-center gap-1.5 text-sm font-medium text-red-800">
               <Wand2 size={14} /> Auto-generate from competition calendar
             </div>
-            <p className="text-xs text-blue-600 mt-0.5">
+            <p className="text-xs text-red-600 mt-0.5">
               Phases, volume, and intensity will be set automatically based on your events.
             </p>
           </div>
@@ -185,7 +186,7 @@ function NewPlanForm({ hasEvents, onSave, onCancel }: {
       <div className="flex gap-2">
         <button
           onClick={() => onSave(title, startDate, autoGenerate && hasEvents)}
-          className="bg-green-600 hover:bg-green-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors flex items-center gap-1.5"
+          className="btn-primary text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors flex items-center gap-1.5"
         >
           {autoGenerate && hasEvents ? <><Wand2 size={14} /> Generate Plan</> : <>Create Plan</>}
         </button>
@@ -251,31 +252,40 @@ export function Dashboard({ onOpenPlan }: Props) {
 
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-5xl mx-auto px-4 py-8">
-
-        {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Judo YTP</h1>
-            <p className="text-gray-500 text-sm mt-1">Yearly Training Plan Builder</p>
+    <div className="min-h-screen" style={{ background: 'var(--bc-snow)' }}>
+      {/* ── BC-branded header ── */}
+      <div className="bc-header no-print">
+        <div className="bc-header-inner">
+          {/* Left: Judo BC logo + divider + app title */}
+          <div className="flex items-center gap-4">
+            <JudoBCLogo variant="dark" height={46} />
+            <div className="bc-divider-v" />
+            <div>
+              <h1 className="bc-app-title">JUDO YTP</h1>
+              <p className="bc-app-subtitle">Yearly Training Plan Builder</p>
+            </div>
           </div>
-          <div className="flex items-center gap-2">
+          {/* Right: actions */}
+          <div className="flex items-center gap-2.5">
             <input ref={fileInputRef} type="file" accept=".json" className="hidden" onChange={handleImportFile} />
             <button
               onClick={() => fileInputRef.current?.click()}
-              className="flex items-center gap-2 bg-white hover:bg-gray-50 text-gray-700 font-medium px-4 py-2.5 rounded-xl transition-colors shadow-sm border border-gray-200"
+              className="btn-ghost-dark flex items-center gap-2 px-3.5 py-2"
             >
-              <Upload size={16} /> Import
+              <Upload size={14} /> Import
             </button>
             <button
               onClick={() => { setShowAthleteForm(true); setEditingAthleteId(null) }}
-              className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2.5 rounded-xl transition-colors shadow-sm"
+              className="btn-accent flex items-center gap-2 px-4 py-2"
             >
-              <Plus size={16} /> New Athlete
+              <Plus size={14} /> New Athlete
             </button>
           </div>
         </div>
+        <div className="bc-red-stripe" />
+      </div>
+
+      <div style={{ maxWidth: '64rem', margin: '0 auto', padding: '2rem 1.5rem', paddingTop: '2rem' }}>
 
         {/* Confirm delete */}
         {confirmDelete && (
@@ -332,7 +342,7 @@ export function Dashboard({ onOpenPlan }: Props) {
                       Replace Existing
                     </button>
                     <button onClick={() => handleConfirmImport('copy')}
-                      className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-4 py-2 rounded-lg">
+                      className="btn-primary text-white text-sm font-medium px-4 py-2 rounded-lg">
                       Import as Copy
                     </button>
                     <button onClick={() => setImportModal(null)}
@@ -357,7 +367,7 @@ export function Dashboard({ onOpenPlan }: Props) {
                   </div>
                   <div className="flex gap-2">
                     <button onClick={() => handleConfirmImport('replace')}
-                      className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-4 py-2 rounded-lg flex-1">
+                      className="btn-primary text-white text-sm font-medium px-4 py-2 rounded-lg flex-1">
                       Import
                     </button>
                     <button onClick={() => setImportModal(null)}
@@ -382,10 +392,13 @@ export function Dashboard({ onOpenPlan }: Props) {
         )}
 
         {athletes.length === 0 && !showAthleteForm && (
-          <div className="text-center py-20 text-gray-400">
-            <User size={48} className="mx-auto mb-4 opacity-30" />
-            <p className="text-lg font-medium">No athletes yet</p>
-            <p className="text-sm mt-1">Click "New Athlete" to get started</p>
+          <div className="text-center py-24">
+            <p style={{ fontFamily: 'var(--font-display)', fontSize: '2.25rem', letterSpacing: '0.1em', color: '#c8c3bc', lineHeight: 1 }}>
+              YOUR ROSTER IS EMPTY
+            </p>
+            <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.68rem', color: '#9ca3af', letterSpacing: '0.14em', textTransform: 'uppercase', marginTop: '0.75rem' }}>
+              Click "New Athlete" to add your first athlete
+            </p>
           </div>
         )}
 
@@ -442,59 +455,59 @@ export function Dashboard({ onOpenPlan }: Props) {
                   </div>
                 ) : (
                   <>
-                    {/* Athlete header */}
-                    <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+                    {/* Athlete header — dark dossier strip */}
+                    <div className="athlete-card-header flex items-center justify-between px-5 py-3.5">
                       <button
                         onClick={() => toggleAthleteExpand(athlete.id)}
-                        className="flex items-center gap-3 flex-1 text-left"
+                        className="flex items-center gap-3.5 flex-1 text-left min-w-0"
                       >
-                        <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center shrink-0">
-                          <User size={18} className="text-blue-600" />
-                        </div>
-                        <div>
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <span className="font-semibold text-gray-900">{athlete.name}</span>
-                            <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full font-mono">{athlete.weightClass}</span>
-                            {athlete.level && (
-                              <span className="text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full capitalize">{athlete.level}</span>
-                            )}
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2.5 flex-wrap">
+                            <span style={{ fontFamily: 'var(--font-display)', fontSize: '1.35rem', letterSpacing: '0.07em', color: '#fff', lineHeight: 1 }}>
+                              {athlete.name.toUpperCase()}
+                            </span>
+                            <span className="badge-weight">{athlete.weightClass}</span>
+                            {athlete.level && <span className="badge-level">{athlete.level}</span>}
                             {refs.length > 0 && (
-                              <span className="text-xs bg-green-50 text-green-700 px-2 py-0.5 rounded-full">
-                                {compCount} comps · {campCount} camps
+                              <span className="badge-events">
+                                {compCount}C · {campCount}Cp
                               </span>
                             )}
                           </div>
                           {(athlete.team || athlete.club) && (
-                            <p className="text-xs text-gray-500 mt-0.5">{[athlete.team, athlete.club].filter(Boolean).join(' · ')}</p>
+                            <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.62rem', color: 'var(--judo-muted)', marginTop: '0.3rem', letterSpacing: '0.04em' }}>
+                              {[athlete.team, athlete.club].filter(Boolean).join(' · ')}
+                            </p>
                           )}
                         </div>
-                        <div className="ml-2">
+                        <div className="ml-auto pl-2 shrink-0">
                           {isExpanded
-                            ? <ChevronUp size={15} className="text-gray-400" />
-                            : <ChevronDown size={15} className="text-gray-400" />
+                            ? <ChevronUp size={14} style={{ color: 'var(--judo-muted)' }} />
+                            : <ChevronDown size={14} style={{ color: 'var(--judo-muted)' }} />
                           }
                         </div>
                       </button>
 
-                      <div className="flex items-center gap-2 ml-3">
+                      <div className="flex items-center gap-1.5 ml-3 shrink-0">
                         <button
                           onClick={() => exportAthlete(athlete, plans, globalEvents)}
                           title="Export athlete data"
-                          className="text-gray-400 hover:text-green-600 p-1.5 rounded-lg hover:bg-green-50 transition-colors"
+                          className="icon-btn-dark success"
                         >
-                          <Download size={15} />
+                          <Download size={14} />
                         </button>
                         <button
                           onClick={() => { setEditingAthleteId(athlete.id); setExpandedAthleteId(null) }}
-                          className="text-xs text-gray-500 hover:text-gray-700 px-3 py-1.5 rounded-lg border border-gray-200 hover:border-gray-300 transition-colors"
+                          className="btn-ghost-dark px-2.5 py-1"
+                          style={{ fontSize: '0.7rem' }}
                         >
                           Edit
                         </button>
                         <button
                           onClick={() => setConfirmDelete({ type: 'athlete', id: athlete.id })}
-                          className="text-gray-400 hover:text-red-500 p-1.5 rounded-lg hover:bg-red-50 transition-colors"
+                          className="icon-btn-dark danger"
                         >
-                          <Trash2 size={15} />
+                          <Trash2 size={14} />
                         </button>
                       </div>
                     </div>
@@ -515,7 +528,7 @@ export function Dashboard({ onOpenPlan }: Props) {
                           <div>
                             <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2">Weekly Schedule (for auto-generation)</p>
                             <select
-                              className="border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                              className="border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-red-600"
                               value={athlete.scheduleId ?? ''}
                               onChange={e => saveAthlete({ ...athlete, scheduleId: e.target.value || undefined })}
                             >
@@ -568,7 +581,8 @@ export function Dashboard({ onOpenPlan }: Props) {
                       ) : (
                         <button
                           onClick={() => setNewPlanFor(athlete.id)}
-                          className="flex items-center gap-2 text-sm text-gray-400 hover:text-blue-600 px-3 py-2 rounded-lg hover:bg-blue-50 transition-colors w-full"
+                          className="flex items-center gap-2 text-sm text-gray-500 hover:text-red-600 px-3 py-2 rounded-lg hover:bg-red-50 transition-colors w-full"
+                          style={{ fontFamily: 'var(--font-body)' }}
                         >
                           <Plus size={14} /> New Training Plan
                         </button>

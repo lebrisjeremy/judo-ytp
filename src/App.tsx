@@ -27,8 +27,10 @@ export default function App() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-gray-400 text-sm">Loading…</div>
+      <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--bc-black)' }}>
+        <div style={{ fontFamily: 'var(--font-display)', fontSize: '1.4rem', letterSpacing: '0.2em', color: '#3a3a3a' }}>
+          LOADING…
+        </div>
       </div>
     )
   }
@@ -39,15 +41,21 @@ export default function App() {
 
   return (
     <div>
-      {/* Sign out button — top right, unobtrusive */}
-      <div className="fixed top-3 right-4 z-50 flex items-center gap-2 no-print">
-        <span className="text-xs text-gray-400 hidden sm:block">{user.email}</span>
+      {/* Sign out — top right, floats over the black header */}
+      <div className="fixed top-4 right-5 z-50 flex items-center gap-2.5 no-print">
+        <span
+          className="hidden sm:block"
+          style={{ fontFamily: 'var(--font-mono)', fontSize: '0.58rem', color: '#555', letterSpacing: '0.04em' }}
+        >
+          {user.email}
+        </span>
         <button
           onClick={handleSignOut}
           title="Sign out"
-          className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-gray-700 px-2 py-1.5 rounded-lg hover:bg-gray-100 transition-colors"
+          className="btn-ghost-dark flex items-center gap-1.5 px-2.5 py-1.5"
+          style={{ fontSize: '0.72rem' }}
         >
-          <LogOut size={13} /> Sign out
+          <LogOut size={12} /> Sign out
         </button>
       </div>
 

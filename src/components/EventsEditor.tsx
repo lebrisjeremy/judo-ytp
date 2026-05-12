@@ -52,7 +52,7 @@ function GlobalEventForm({ initial, onSave, onCancel }: {
         <div className="col-span-2">
           <label className="text-xs font-medium text-gray-600 mb-1 block">Name *</label>
           <input
-            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-red-600"
             placeholder="e.g. Quebec Open, Japan Training Camp"
             value={name} onChange={e => setName(e.target.value)}
           />
@@ -64,7 +64,7 @@ function GlobalEventForm({ initial, onSave, onCancel }: {
               <button key={t} onClick={() => setType(t)}
                 className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-sm font-medium border-2 transition-all ${
                   type === t
-                    ? t === 'competition' ? 'bg-red-50 border-red-400 text-red-700' : 'bg-blue-50 border-blue-400 text-blue-700'
+                    ? t === 'competition' ? 'bg-red-50 border-red-400 text-red-700' : 'bg-gray-100 border-gray-500 text-gray-700'
                     : 'bg-white border-gray-200 text-gray-500 hover:border-gray-300'
                 }`}>
                 {t === 'competition' ? <Trophy size={13} /> : <Tent size={13} />}
@@ -76,7 +76,7 @@ function GlobalEventForm({ initial, onSave, onCancel }: {
         <div>
           <label className="text-xs font-medium text-gray-600 mb-1 block">Location</label>
           <input
-            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-red-600"
             placeholder="City, Country"
             value={location} onChange={e => setLocation(e.target.value)}
           />
@@ -84,7 +84,7 @@ function GlobalEventForm({ initial, onSave, onCancel }: {
         <div>
           <label className="text-xs font-medium text-gray-600 mb-1 block">Start Date *</label>
           <input type="date"
-            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-red-600"
             value={startDate} onChange={e => setStartDate(e.target.value)} />
         </div>
         <div>
@@ -92,19 +92,19 @@ function GlobalEventForm({ initial, onSave, onCancel }: {
             End Date {type === 'camp' ? '*' : '(optional)'}
           </label>
           <input type="date" min={startDate}
-            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-red-600"
             value={endDate} onChange={e => setEndDate(e.target.value)} />
         </div>
         <div>
           <label className="text-xs font-medium text-gray-600 mb-1 block">Travel days before</label>
           <input type="number" min={0} max={14}
-            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-red-600"
             value={travelBefore || ''} onChange={e => setTravelBefore(Number(e.target.value))} placeholder="0" />
         </div>
         <div>
           <label className="text-xs font-medium text-gray-600 mb-1 block">Travel days after</label>
           <input type="number" min={0} max={14}
-            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-red-600"
             value={travelAfter || ''} onChange={e => setTravelAfter(Number(e.target.value))} placeholder="0" />
         </div>
         {travelBefore > 0 && (
@@ -124,7 +124,7 @@ function GlobalEventForm({ initial, onSave, onCancel }: {
         <div className="col-span-2">
           <label className="text-xs font-medium text-gray-600 mb-1 block">Notes</label>
           <input
-            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-red-600"
             placeholder="Optional notes"
             value={notes} onChange={e => setNotes(e.target.value)} />
         </div>
@@ -144,7 +144,7 @@ function GlobalEventForm({ initial, onSave, onCancel }: {
               notes: notes || undefined,
             })
           }}
-          className="bg-blue-600 hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors">
+          className="bg-[var(--bc-red)] hover:bg-[var(--bc-red-dark)] disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors">
           {initial ? 'Save Changes' : 'Create Event'}
         </button>
         <button onClick={onCancel}
@@ -190,6 +190,14 @@ export function EventsEditor({ refs, globalEvents, onChangeRefs, onSaveGlobalEve
     onChangeRefs(refs.map(r => r.eventId === eventId ? { ...r, importance } : r))
   }
 
+  function setFirstFightDate(eventId: string, date: string | undefined) {
+    onChangeRefs(refs.map(r => r.eventId === eventId ? { ...r, firstFightDate: date || undefined } : r))
+  }
+
+  function setPreCompMode(eventId: string, mode: 'auto' | 'force' | 'disable' | undefined) {
+    onChangeRefs(refs.map(r => r.eventId === eventId ? { ...r, preCompSessionMode: mode } : r))
+  }
+
   function handleCreateEvent(ge: GlobalEvent) {
     onSaveGlobalEvent(ge)
     // Auto-assign the newly created event
@@ -220,7 +228,7 @@ export function EventsEditor({ refs, globalEvents, onChangeRefs, onSaveGlobalEve
         <div className="flex items-center gap-2">
           <span className="text-sm font-semibold text-gray-700">Competition & Camp Calendar</span>
           {assignedCount > 0 && (
-            <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">
+            <span className="text-xs bg-slate-100 text-slate-700 px-2 py-0.5 rounded-full">
               {compCount} comps · {campCount} camps
             </span>
           )}
@@ -238,7 +246,7 @@ export function EventsEditor({ refs, globalEvents, onChangeRefs, onSaveGlobalEve
             <div className="relative flex-1">
               <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
               <input
-                className="w-full pl-8 pr-3 py-1.5 border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full pl-8 pr-3 py-1.5 border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-red-600"
                 placeholder="Search events..."
                 value={search}
                 onChange={e => setSearch(e.target.value)}
@@ -252,7 +260,7 @@ export function EventsEditor({ refs, globalEvents, onChangeRefs, onSaveGlobalEve
             {!showCreateForm && (
               <button
                 onClick={() => { setShowCreateForm(true); setEditingGlobalId(null) }}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors whitespace-nowrap"
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-[var(--bc-red)] hover:bg-[var(--bc-red-dark)] text-white text-sm font-medium rounded-lg transition-colors whitespace-nowrap"
               >
                 <Plus size={13} /> New Event
               </button>
@@ -309,7 +317,7 @@ export function EventsEditor({ refs, globalEvents, onChangeRefs, onSaveGlobalEve
               <div key={ge.id}
                 className={`rounded-lg border transition-colors ${
                   isAssigned
-                    ? 'border-blue-200 bg-blue-50/60'
+                    ? 'border-slate-200 bg-slate-50/60'
                     : 'border-transparent hover:bg-gray-50'
                 }`}>
                 {/* Main row */}
@@ -321,11 +329,11 @@ export function EventsEditor({ refs, globalEvents, onChangeRefs, onSaveGlobalEve
                     className="w-4 h-4 accent-blue-600 rounded shrink-0 cursor-pointer"
                   />
                   <div className={`w-6 h-6 rounded-md flex items-center justify-center shrink-0 ${
-                    isComp ? 'bg-red-100' : 'bg-blue-100'
+                    isComp ? 'bg-red-100' : 'bg-slate-100'
                   }`}>
                     {isComp
                       ? <Trophy size={12} className="text-red-500" />
-                      : <Tent size={12} className="text-blue-500" />
+                      : <Tent size={12} className="text-slate-500" />
                     }
                   </div>
                   <div className="flex-1 min-w-0">
@@ -365,28 +373,72 @@ export function EventsEditor({ refs, globalEvents, onChangeRefs, onSaveGlobalEve
 
                 {/* Importance selector — only for assigned events */}
                 {isAssigned && ref && (
-                  <div className="px-3 pb-2.5 flex items-center gap-2">
-                    <span className="text-xs text-gray-500 w-20 shrink-0">
-                      {isComp ? 'Importance:' : 'Priority:'}
-                    </span>
-                    <div className="flex gap-1">
-                      {([1,2,3,4,5] as const).map(i => (
-                        <button
-                          key={i}
-                          onClick={() => setImportance(ge.id, i)}
-                          title={IMPORTANCE_LABELS[i]}
-                          className={`w-7 h-7 rounded-lg text-xs font-bold transition-all ${
-                            ref.importance === i
-                              ? isComp ? 'bg-red-500 text-white shadow-sm' : 'bg-blue-500 text-white shadow-sm'
-                              : 'bg-white border border-gray-200 text-gray-500 hover:bg-gray-100'
-                          }`}
-                        >
-                          {IMPORTANCE_STARS[i - 1]}
-                        </button>
-                      ))}
+                  <>
+                    <div className="px-3 pb-2 flex items-center gap-2">
+                      <span className="text-xs text-gray-500 w-20 shrink-0">
+                        {isComp ? 'Importance:' : 'Priority:'}
+                      </span>
+                      <div className="flex gap-1">
+                        {([1,2,3,4,5] as const).map(i => (
+                          <button
+                            key={i}
+                            onClick={() => setImportance(ge.id, i)}
+                            title={IMPORTANCE_LABELS[i]}
+                            className={`w-7 h-7 rounded-lg text-xs font-bold transition-all ${
+                              ref.importance === i
+                                ? isComp ? 'bg-red-500 text-white shadow-sm' : 'bg-slate-500 text-white shadow-sm'
+                                : 'bg-white border border-gray-200 text-gray-500 hover:bg-gray-100'
+                            }`}
+                          >
+                            {IMPORTANCE_STARS[i - 1]}
+                          </button>
+                        ))}
+                      </div>
+                      <span className="text-xs text-gray-400 ml-1">{IMPORTANCE_LABELS[ref.importance]}</span>
                     </div>
-                    <span className="text-xs text-gray-400 ml-1">{IMPORTANCE_LABELS[ref.importance]}</span>
-                  </div>
+
+                    {/* Per-athlete competition details */}
+                    {isComp && (
+                      <div className="px-3 pb-2.5 flex items-center gap-3 flex-wrap">
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-xs text-gray-500">First fight:</span>
+                          <input
+                            type="date"
+                            value={ref.firstFightDate ?? ''}
+                            onChange={e => setFirstFightDate(ge.id, e.target.value)}
+                            className="border border-gray-200 rounded px-2 py-0.5 text-xs outline-none focus:ring-1 focus:ring-red-500"
+                          />
+                          {ref.firstFightDate && (
+                            <button
+                              onClick={() => setFirstFightDate(ge.id, undefined)}
+                              className="text-gray-300 hover:text-gray-500 text-xs"
+                              title="Clear"
+                            >✕</button>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-xs text-gray-500">Pre-comp:</span>
+                          {(['auto', 'force', 'disable'] as const).map(mode => (
+                            <button
+                              key={mode}
+                              onClick={() => setPreCompMode(ge.id, (ref.preCompSessionMode ?? 'auto') === mode ? undefined : mode)}
+                              className={`text-xs px-2 py-0.5 rounded border transition-all ${
+                                (ref.preCompSessionMode ?? 'auto') === mode
+                                  ? mode === 'disable'
+                                    ? 'bg-red-500 text-white border-red-500'
+                                    : mode === 'force'
+                                      ? 'bg-green-600 text-white border-green-600'
+                                      : 'bg-slate-600 text-white border-slate-600'
+                                  : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50'
+                              }`}
+                            >
+                              {mode}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
             )

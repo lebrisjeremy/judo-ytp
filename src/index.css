@@ -1,16 +1,246 @@
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;500;600;700&family=DM+Mono:ital,wght@0,400;0,500;1,400&display=swap');
 @import "tailwindcss";
+
+:root {
+  /* ── Judo BC Brand Palette ─────────────────────────────────────── */
+  --bc-black:     #0d0d0d;
+  --bc-charcoal:  #171717;
+  --bc-graphite:  #222222;
+  --bc-steel:     #2c2c2c;
+  --bc-red:       #c0392b;
+  --bc-red-dark:  #9b2d22;
+  --bc-red-glow:  rgba(192, 57, 43, 0.14);
+  --bc-white:     #ffffff;
+  --bc-snow:      #f6f4f1;   /* warm white body */
+  --bc-border:    #e5e0d8;
+  --bc-text:      #1a1a1a;
+  --bc-muted:     #6e6e6e;
+  --bc-amber:     #d97706;
+
+  /* ── Legacy aliases (used by PlanEditor, YearGrid, etc.) ──────── */
+  --judo-bg:      var(--bc-black);
+  --judo-dark:    var(--bc-charcoal);
+  --judo-surface: var(--bc-graphite);
+  --judo-border:  var(--bc-steel);
+  --judo-red:     var(--bc-red);
+  --judo-red-dim: var(--bc-red-glow);
+  --judo-amber:   var(--bc-amber);
+  --judo-muted:   #8a8a8a;
+  --judo-text:    #ececec;
+  --judo-paper:   var(--bc-white);
+
+  --font-display: 'Bebas Neue', sans-serif;
+  --font-body:    'Outfit', sans-serif;
+  --font-mono:    'DM Mono', monospace;
+}
 
 @layer base {
   body {
-    font-family: system-ui, -apple-system, sans-serif;
-    background-color: #f9fafb;
-    color: #111827;
+    font-family: var(--font-body);
+    background-color: var(--bc-snow);
+    color: var(--bc-text);
     margin: 0;
   }
   #root {
     width: 100%;
     min-height: 100vh;
   }
+
+  /* ── Global form focus: red ring instead of browser-default blue ── */
+  input[type='text']:focus,
+  input[type='email']:focus,
+  input[type='password']:focus,
+  input[type='date']:focus,
+  input[type='number']:focus,
+  select:focus,
+  textarea:focus {
+    outline: none;
+    border-color: var(--bc-red) !important;
+    box-shadow: 0 0 0 3px rgba(192, 57, 43, 0.18) !important;
+  }
+}
+
+@layer components {
+
+  /* ── Dashboard / app header ───────────────────────────────────── */
+  .bc-header {
+    background: var(--bc-black);
+  }
+  .bc-header-inner {
+    max-width: 64rem;
+    margin: 0 auto;
+    padding: 1.4rem 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+  .bc-red-stripe {
+    height: 3px;
+    background: linear-gradient(90deg, var(--bc-red) 0%, var(--bc-red-dark) 100%);
+  }
+  .bc-divider-v {
+    width: 1px;
+    height: 2.5rem;
+    background: rgba(255, 255, 255, 0.12);
+    flex-shrink: 0;
+  }
+
+  /* ── App title in header ─────────────────────────────────────── */
+  .bc-app-title {
+    font-family: var(--font-display);
+    font-size: 2.25rem;
+    letter-spacing: 0.1em;
+    color: #ffffff;
+    line-height: 1;
+    margin: 0;
+  }
+  .bc-app-subtitle {
+    font-family: var(--font-mono);
+    font-size: 0.56rem;
+    letter-spacing: 0.22em;
+    color: #666666;
+    text-transform: uppercase;
+    margin-top: 0.3rem;
+  }
+
+  /* ── Legacy: keep for PlanEditor hero ────────────────────────── */
+  .dashboard-hero {
+    background: var(--bc-black);
+    border-bottom: none;
+  }
+
+  /* ── Athlete card dark header strip ─────────────────────────── */
+  .athlete-card-header {
+    background: var(--bc-charcoal);
+    border-bottom: 1px solid var(--bc-steel);
+  }
+
+  /* ── Badge variants ──────────────────────────────────────────── */
+  .badge-weight {
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    color: var(--bc-amber);
+    background: rgba(217, 119, 6, 0.1);
+    border: 1px solid rgba(217, 119, 6, 0.28);
+    padding: 0.125rem 0.45rem;
+    border-radius: 0.25rem;
+    letter-spacing: 0.04em;
+    line-height: 1.6;
+  }
+  .badge-level {
+    font-family: var(--font-body);
+    font-size: 0.62rem;
+    font-weight: 600;
+    color: #f87171;
+    background: rgba(192, 57, 43, 0.14);
+    border: 1px solid rgba(192, 57, 43, 0.28);
+    padding: 0.125rem 0.45rem;
+    border-radius: 9999px;
+    text-transform: uppercase;
+    letter-spacing: 0.09em;
+    line-height: 1.6;
+  }
+  .badge-events {
+    font-family: var(--font-mono);
+    font-size: 0.62rem;
+    color: #4ade80;
+    background: rgba(74, 222, 128, 0.1);
+    border: 1px solid rgba(74, 222, 128, 0.18);
+    padding: 0.125rem 0.45rem;
+    border-radius: 9999px;
+    line-height: 1.6;
+  }
+
+  /* ── Button variants ─────────────────────────────────────────── */
+  .btn-ghost-dark {
+    font-family: var(--font-body);
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: #9a9a9a;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 0.4rem;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .btn-ghost-dark:hover {
+    color: #eeeeee;
+    border-color: rgba(255,255,255,0.2);
+    background: rgba(255, 255, 255, 0.08);
+  }
+
+  .btn-accent {
+    font-family: var(--font-body);
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #fff;
+    background: var(--bc-red);
+    border: none;
+    border-radius: 0.4rem;
+    cursor: pointer;
+    letter-spacing: 0.03em;
+    transition: background 0.15s;
+  }
+  .btn-accent:hover { background: var(--bc-red-dark); }
+
+  /* ── Primary button (light contexts) ────────────────────────── */
+  .btn-primary {
+    background: var(--bc-red);
+    color: #ffffff;
+    border: none;
+    border-radius: 0.5rem;
+    font-family: var(--font-body);
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .btn-primary:hover { background: var(--bc-red-dark); }
+
+  /* ── Icon buttons on dark backgrounds ───────────────────────── */
+  .icon-btn-dark {
+    color: #777777;
+    background: transparent;
+    border: none;
+    border-radius: 0.375rem;
+    padding: 0.375rem;
+    cursor: pointer;
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .icon-btn-dark:hover {
+    color: #eeeeee;
+    background: rgba(255, 255, 255, 0.07);
+  }
+  .icon-btn-dark.danger:hover  { color: #f87171; background: rgba(239, 68, 68, 0.12); }
+  .icon-btn-dark.success:hover { color: #4ade80; background: rgba(74, 222, 128, 0.1); }
+
+  /* ── Auth form inputs (dark card) ────────────────────────────── */
+  .input-dark {
+    width: 100%;
+    background: #080808;
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 0.5rem;
+    padding: 0.625rem 0.75rem;
+    font-size: 0.875rem;
+    color: var(--judo-text);
+    font-family: var(--font-body);
+    outline: none;
+    transition: border-color 0.15s, box-shadow 0.15s;
+    box-sizing: border-box;
+  }
+  .input-dark:focus {
+    border-color: var(--bc-red) !important;
+    box-shadow: 0 0 0 3px rgba(192, 57, 43, 0.2) !important;
+  }
+  .input-dark::placeholder { color: #333333; }
+
+  /* ── Typography helpers ──────────────────────────────────────── */
+  .font-display    { font-family: var(--font-display); }
+  .font-mono-judo  { font-family: var(--font-mono); }
 }
 
 @media print {
