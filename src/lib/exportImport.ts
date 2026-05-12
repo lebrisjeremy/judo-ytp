@@ -66,12 +66,15 @@ export interface ResolvedImport {
 export function resolveImport(
   data: AthleteExport,
   existingGlobalEvents: GlobalEvent[],
-  mode: 'replace' | 'copy',
+  mode: 'replace' | 'copy' | 'new',
 ): ResolvedImport {
   let athlete = { ...data.athlete }
 
   if (mode === 'copy') {
-    athlete = { ...athlete, id: crypto.randomUUID(), name: athlete.name + ' (Copy)' }
+    athlete = { ...athlete, id: crypto.randomUUID(), name: athlete.name + ' (Copy)', scheduleId: undefined }
+  } else if (mode === 'new') {
+    // Cross-user import: fresh UUIDs, no rename, drop scheduleId (won't exist for new user)
+    athlete = { ...athlete, id: crypto.randomUUID(), scheduleId: undefined }
   }
 
   // Deduplicate events: match by id, then by name+startDate
@@ -103,7 +106,7 @@ export function resolveImport(
   const plans: YearlyPlan[] = data.plans.map(p => ({
     ...p,
     athleteId: athlete.id,
-    id: mode === 'copy' ? crypto.randomUUID() : p.id,
+    id: mode !== 'replace' ? crypto.randomUUID() : p.id,
   }))
 
   return { athlete, plans, newGlobalEvents }

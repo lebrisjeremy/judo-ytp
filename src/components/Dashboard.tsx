@@ -240,7 +240,7 @@ export function Dashboard({ onOpenPlan }: Props) {
     reader.readAsText(file)
   }
 
-  function handleConfirmImport(mode: 'replace' | 'copy') {
+  function handleConfirmImport(mode: 'replace' | 'copy' | 'new') {
     if (!importModal) return
     const { athlete, plans: newPlans, newGlobalEvents } = resolveImport(
       importModal.data, globalEvents, mode
@@ -366,7 +366,7 @@ export function Dashboard({ onOpenPlan }: Props) {
                     </div>
                   </div>
                   <div className="flex gap-2">
-                    <button onClick={() => handleConfirmImport('replace')}
+                    <button onClick={() => handleConfirmImport('new')}
                       className="btn-primary text-white text-sm font-medium px-4 py-2 rounded-lg flex-1">
                       Import
                     </button>
