@@ -1,4 +1,4 @@
-import { addDays, addWeeks, differenceInWeeks, format, getDay, isWithinInterval, parseISO, startOfWeek, subDays } from 'date-fns'
+import { addDays, addWeeks, differenceInWeeks, format, getDay, isWithinInterval, parseISO, startOfWeek, subDays, isSameDay } from 'date-fns'
 import type { AthleteEvent, Week, SeasonPhase, WeeklyTemplate, WeightCycle, CardioCycle, WeeklySchedule, SessionCounts } from '../types'
 import { DEFAULT_TEMPLATE } from '../types'
 
@@ -158,9 +158,8 @@ function buildSessions(
   }
 }
 
-// Adjust session counts for a tournament week with travel.
-// Reduces training sessions to days available before departure; adds +1 technical (pre-comp
-// weight management) when the athlete travels away and has at least one day before departure.
+// Build a set of weekday indices (Mon=0..Sun=6) that are blocked by tournament/travel.
+// Fires for any competition overlapping this week, regardless of local/away.
 function adjustSessionsForTournamentTravel(
   base: SessionCounts,
   monday: Date,
@@ -169,45 +168,84 @@ function adjustSessionsForTournamentTravel(
 ): { sessions: SessionCounts; preCompSession: boolean } {
   const sunday = addDays(monday, 6)
 
-  // Only adjust for travel-away competitions starting this week
-  const travelComps = events
-    .filter(e =>
-      e.type === 'competition' &&
-      isWithinInterval(parseISO(e.startDate), { start: monday, end: sunday }) &&
-      (e.travelBefore ?? 0) > 0
-    )
-    .sort((a, b) => parseISO(a.startDate).getTime() - parseISO(b.startDate).getTime())
+  // All competitions that touch this week (started before sunday, ends after monday)
+  const thisWeekComps = events.filter(e => {
+    if (e.type !== 'competition') return false
+    const start = parseISO(e.startDate)
+    const end = e.endDate ? parseISO(e.endDate) : start
+    return start <= sunday && end >= monday
+  })
 
-  if (travelComps.length === 0) {
-    return { sessions: base, preCompSession: false }
+  if (thisWeekComps.length === 0) return { sessions: base, preCompSession: false }
+
+  // Build set of blocked weekday indices for this week
+  const blocked = new Set<number>()
+
+  for (const e of thisWeekComps) {
+    const eventStart = parseISO(e.startDate)
+    const eventEnd = e.endDate ? parseISO(e.endDate) : eventStart
+
+    // Travel-before days within this week
+    if ((e.travelBefore ?? 0) > 0) {
+      let d = subDays(eventStart, e.travelBefore!)
+      while (d < eventStart) {
+        if (d >= monday && d <= sunday) blocked.add((getDay(d) + 6) % 7)
+        d = addDays(d, 1)
+      }
+    }
+
+    // Tournament days within this week
+    let d = eventStart < monday ? monday : eventStart
+    const tournEnd = eventEnd > sunday ? sunday : eventEnd
+    while (d <= tournEnd) {
+      blocked.add((getDay(d) + 6) % 7)
+      d = addDays(d, 1)
+    }
+
+    // Travel-after days within this week
+    if ((e.travelAfter ?? 0) > 0) {
+      let ra = addDays(eventEnd, 1)
+      for (let i = 0; i < e.travelAfter!; i++, ra = addDays(ra, 1)) {
+        if (ra >= monday && ra <= sunday) blocked.add((getDay(ra) + 6) % 7)
+      }
+    }
   }
 
-  const comp = travelComps[0]
-  const departureDate = subDays(parseISO(comp.startDate), comp.travelBefore!)
-  // Mon=0, Tue=1, ..., Sun=6. Days with index < cutoffDay are available for training.
-  const cutoffDay = (getDay(departureDate) + 6) % 7
-
-  let adj: SessionCounts
+  // Count available sessions from schedule, or use proportional fallback
+  let sessions: SessionCounts
 
   if (schedule) {
     let randori = 0, technical = 0, strengthCond = 0, cardio = 0
+
     for (const day of schedule.days) {
-      if (day.day >= cutoffDay) continue // blocked by travel
+      if (blocked.has(day.day)) continue
+
+      const actualDate = addDays(monday, day.day)
+
       for (const s of day.sessions) {
         const isJudo = s.type === 'randori' || s.type === 'technical'
-        // earlyDeparture: skip evening judo on the day immediately before departure
-        if (comp.earlyDeparture && day.day === cutoffDay - 1 && isJudo) continue
+
+        // earlyDeparture: skip judo on the day immediately before any departure
+        if (isJudo && thisWeekComps.some(e => {
+          if (!e.earlyDeparture || !(e.travelBefore ?? 0)) return false
+          const dept = subDays(parseISO(e.startDate), e.travelBefore!)
+          return isSameDay(subDays(dept, 1), actualDate)
+        })) continue
+
         if (s.type === 'randori') randori++
         else if (s.type === 'technical') technical++
         else if (s.type === 'strength-cond') strengthCond++
         else if (s.type === 'cardio') cardio++
       }
     }
-    adj = { randori, technical, strengthCond, cardio, physicalTesting: false, tournament: true }
+
+    sessions = { randori, technical, strengthCond, cardio, physicalTesting: false, tournament: true }
   } else {
-    // Proportional reduction over 5 standard training days (Mon–Fri)
-    const factor = cutoffDay <= 0 ? 0 : Math.min(1, cutoffDay / 5)
-    adj = {
+    // Proportional over 5 standard training days
+    const availDays = 7 - blocked.size
+    const factor = Math.min(1, Math.max(0, availDays / 5))
+
+    sessions = {
       randori: Math.round(base.randori * factor),
       technical: Math.round(base.technical * factor),
       strengthCond: Math.round(base.strengthCond * factor),
@@ -215,21 +253,52 @@ function adjustSessionsForTournamentTravel(
       physicalTesting: false,
       tournament: true,
     }
-    // earlyDeparture: remove one evening judo session
-    if (comp.earlyDeparture) {
-      if (adj.randori > 0) adj.randori--
-      else if (adj.technical > 0) adj.technical--
+
+    if (thisWeekComps.some(e => e.earlyDeparture) && sessions.randori > 0) {
+      sessions.randori--
     }
   }
 
-  // Pre-competition weight management: +1 technical when there's at least 1 available day
+  // Pre-competition session
+  // preCompDate = day before firstFightDate (or day before startDate if not set)
   let preCompSession = false
-  if (cutoffDay > 0) {
-    adj.technical += 1
-    preCompSession = true
+
+  for (const comp of thisWeekComps) {
+    if (comp.preCompSessionMode === 'disable') continue
+
+    const firstFight = comp.firstFightDate
+      ? parseISO(comp.firstFightDate)
+      : parseISO(comp.startDate)
+    const preCompDate = subDays(firstFight, 1)
+
+    // Must fall within this week
+    if (preCompDate < monday || preCompDate > sunday) continue
+
+    const preCompDayNum = (getDay(preCompDate) + 6) % 7
+
+    // Must not be blocked by tournament or travel
+    if (blocked.has(preCompDayNum)) continue
+
+    // Must not be the departure day itself
+    if ((comp.travelBefore ?? 0) > 0) {
+      const dept = subDays(parseISO(comp.startDate), comp.travelBefore!)
+      if (isSameDay(dept, preCompDate)) continue
+    }
+
+    // Eligibility: non-local event, OR firstFightDate > startDate (prep day), OR forced
+    const isNonLocal = (comp.travelBefore ?? 0) > 0
+    const hasPrepDay = !!comp.firstFightDate &&
+      parseISO(comp.firstFightDate) > parseISO(comp.startDate)
+    const isForced = comp.preCompSessionMode === 'force'
+
+    if (isNonLocal || hasPrepDay || isForced) {
+      sessions.technical += 1
+      preCompSession = true
+      break
+    }
   }
 
-  return { sessions: adj, preCompSession }
+  return { sessions, preCompSession }
 }
 
 function isNearMajorComp(weekStart: Date, events: AthleteEvent[], withinWeeks = 2): boolean {

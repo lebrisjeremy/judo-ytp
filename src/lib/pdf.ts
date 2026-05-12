@@ -1,9 +1,12 @@
 import jsPDF from 'jspdf'
 import type { YearlyPlan, Athlete } from '../types'
-import { PHASE_LABELS, PHASE_COLORS, VOLUME_LABELS, INTENSITY_LABELS, IMPORTANCE_STARS,
+import { PHASE_LABELS, PHASE_COLORS, VOLUME_LABELS, INTENSITY_LABELS,
   WEIGHT_CYCLE_SHORT, WEIGHT_CYCLE_COLORS,
   CARDIO_CYCLE_SHORT, CARDIO_CYCLE_COLORS } from '../types'
 import { weekRange, monthOf } from './dates'
+
+// jsPDF helvetica (WinAnsi) cannot render U+2605 ★ — outputs "&" via entity fallback
+function impStars(n: number): string { return '*'.repeat(n) }
 
 function hexToRgb(hex: string): [number, number, number] {
   return [
@@ -360,7 +363,7 @@ export function exportToPdf(plan: YearlyPlan, athlete: Athlete) {
           `${w.volume}/5 — ${VOLUME_LABELS[w.volume].split(' – ')[1]?.slice(0, 22) ?? ''}`,
           `${w.intensity}/5 — ${INTENSITY_LABELS[w.intensity].split(': ')[1]?.slice(0, 18) ?? ''}`,
           [
-            ...[w.weekEvent, w.weekendEvent].filter(Boolean).map(e => `${e!.name} ${IMPORTANCE_STARS[e!.importance - 1]}`),
+            ...[w.weekEvent, w.weekendEvent].filter(Boolean).map(e => `${e!.name} ${impStars(e!.importance)}`),
             ...(w.travelNote ? [w.travelNote === 'travel-before' ? 'Travel' : 'Travel/Recovery'] : []),
           ].join(', '),
           w.mandalaFocus?.slice(0, 18) ?? '',
@@ -373,7 +376,7 @@ export function exportToPdf(plan: YearlyPlan, athlete: Athlete) {
           `${w.volume}/5 — ${VOLUME_LABELS[w.volume].split(' – ')[1]?.slice(0, 22) ?? ''}`,
           `${w.intensity}/5 — ${INTENSITY_LABELS[w.intensity].split(': ')[1]?.slice(0, 22) ?? ''}`,
           [
-            ...[w.weekEvent, w.weekendEvent].filter(Boolean).map(e => `${e!.name} ${IMPORTANCE_STARS[e!.importance - 1]}`),
+            ...[w.weekEvent, w.weekendEvent].filter(Boolean).map(e => `${e!.name} ${impStars(e!.importance)}`),
             ...(w.travelNote ? [w.travelNote === 'travel-before' ? 'Travel' : 'Travel/Recovery'] : []),
           ].join(', '),
           (w.mandalaFocus ?? w.notes ?? '').slice(0, 10),

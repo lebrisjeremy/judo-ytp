@@ -165,7 +165,9 @@ export interface AthleteEvent {
   notes?: string
   travelBefore?: number
   travelAfter?: number
-  earlyDeparture?: boolean   // if true, skip evening judo the day before departure
+  earlyDeparture?: boolean        // if true, skip evening judo the day before departure
+  firstFightDate?: string         // day this athlete's category first competes (defaults to startDate)
+  preCompSessionMode?: 'auto' | 'force' | 'disable'
 }
 
 // Global reusable event — created once, shared across athletes
@@ -189,6 +191,8 @@ export interface AthleteEventRef {
   travelBefore?: number       // overrides GlobalEvent.travelBefore when set
   travelAfter?: number        // overrides GlobalEvent.travelAfter when set
   earlyDeparture?: boolean    // overrides GlobalEvent.earlyDeparture when set
+  firstFightDate?: string     // day this athlete's category first competes
+  preCompSessionMode?: 'auto' | 'force' | 'disable'
 }
 
 // Resolve refs + global events → AthleteEvent[] (the format autoplan expects)
@@ -211,6 +215,8 @@ export function resolveAthleteEvents(
       travelBefore: ref.travelBefore ?? ge.travelBefore,
       travelAfter: ref.travelAfter ?? ge.travelAfter,
       earlyDeparture: ref.earlyDeparture ?? ge.earlyDeparture,
+      firstFightDate: ref.firstFightDate,
+      preCompSessionMode: ref.preCompSessionMode,
     } satisfies AthleteEvent]
   })
 }
