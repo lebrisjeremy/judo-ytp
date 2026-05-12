@@ -234,6 +234,7 @@ export interface Athlete {
   eventRefs?: AthleteEventRef[]   // replaces events — references to GlobalEvent
   events?: AthleteEvent[]          // legacy field — auto-migrated on first load
   scheduleId?: string              // reference to WeeklySchedule for auto-generation
+  technicalProfile?: AthleteTechnicalProfile
 }
 
 export interface YearlyPlan {
@@ -248,6 +249,7 @@ export interface YearlyPlan {
   notes?: string
   createdAt: string
   updatedAt: string
+  technicalCycles?: TechnicalCycle[]
 }
 
 export const PHASE_LABELS: Record<SeasonPhase, string> = {
@@ -358,4 +360,182 @@ export const CARDIO_CYCLE_COLORS: Record<CardioCycle, string> = {
   'lactic-power':       '#f97316',
   'alactic-power':      '#ef4444',
   'speed-coordination': '#8b5cf6',
+}
+
+// ============================================================
+// TECHNICAL PERIODIZATION TYPES
+// ============================================================
+
+export type TechnicalPhase =
+  | 'acquisition'
+  | 'consolidation'
+  | 'competition-integration'
+  | 'peak'
+  | 'transition'
+
+export const TECHNICAL_PHASE_LABELS: Record<TechnicalPhase, string> = {
+  'acquisition': 'Acquisition',
+  'consolidation': 'Consolidation',
+  'competition-integration': 'Competition Integration',
+  'peak': 'Peak',
+  'transition': 'Transition',
+}
+
+export const TECHNICAL_PHASE_COLORS: Record<TechnicalPhase, string> = {
+  'acquisition': '#f97316',
+  'consolidation': '#3b82f6',
+  'competition-integration': '#8b5cf6',
+  'peak': '#ef4444',
+  'transition': '#10b981',
+}
+
+export const TECHNICAL_PHASE_SHORT: Record<TechnicalPhase, string> = {
+  'acquisition': 'X',
+  'consolidation': 'C',
+  'competition-integration': 'I',
+  'peak': 'P',
+  'transition': 'T',
+}
+
+export type DevelopmentLevel =
+  | 'beginner'
+  | 'development'
+  | 'provincial'
+  | 'national'
+  | 'international'
+  | 'elite'
+
+export const DEVELOPMENT_LEVEL_LABELS: Record<DevelopmentLevel, string> = {
+  beginner: 'Beginner',
+  development: 'Development',
+  provincial: 'Provincial / Club Elite',
+  national: 'National Level',
+  international: 'International',
+  elite: 'Elite / World Level',
+}
+
+export type GripStyle = 'sleeve-lapel' | 'cross-grip' | 'high-collar' | 'pistol' | 'pocket' | 'belt'
+
+export const GRIP_STYLE_LABELS: Record<GripStyle, string> = {
+  'sleeve-lapel': 'Sleeve-Lapel (Standard)',
+  'cross-grip': 'Cross Grip',
+  'high-collar': 'High Collar',
+  'pistol': 'Pistol Grip',
+  'pocket': 'Pocket Grip',
+  'belt': 'Belt Grip',
+}
+
+export type CounterFightingStyle = 'proactive' | 'reactive' | 'mixed'
+export type TransitionPreference = 'standing-to-ground' | 'ground-to-standing' | 'mixed'
+export type NeWazaStrength = 'strong' | 'moderate' | 'weak'
+
+export interface TechniqueInSystem {
+  techniqueId: string
+  role: 'primary' | 'secondary' | 'combination' | 'counter' | 'transition' | 'ne-waza'
+  gripSequence?: string
+  stanceFocus?: 'RR' | 'RL' | 'LL'
+  notes?: string
+}
+
+export interface CombinationChain {
+  id: string
+  name?: string
+  setup: string     // technique ID
+  finish: string    // technique ID
+  notes?: string
+}
+
+export interface NeWazaChain {
+  id: string
+  entry: string
+  submissions: string[]
+  notes?: string
+}
+
+export interface TechnicalSystem {
+  techniques: TechniqueInSystem[]
+  combinations: CombinationChain[]
+  gripSequences: string[]
+  neWazaChains: NeWazaChain[]
+}
+
+export interface AthleteTechnicalProfile {
+  // Personal info
+  firstName?: string
+  lastName?: string
+  birthYear?: number
+  weightCategory?: string
+  beltRank?: string
+  handedness?: 'right' | 'left' | 'ambidextrous'
+  club?: string
+  coach?: string
+
+  // Development
+  developmentLevel?: DevelopmentLevel
+  yearsOfJudo?: number
+  yearsOfCompetition?: number
+  trainingFrequencyPerWeek?: number
+  averageWeeklyJudoSessions?: number
+
+  // Technical identity
+  preferredStance?: 'right' | 'left' | 'ambidextrous'
+  tokui?: string[]          // primary weapon technique IDs
+  secondary?: string[]      // secondary technique IDs
+  ashiWazaPreference?: boolean
+  favoriteGrips?: string[]
+  gripStyle?: GripStyle[]
+  counterFightingStyle?: CounterFightingStyle
+  transitionPreference?: TransitionPreference
+  neWazaStrength?: NeWazaStrength
+
+  // Full technical system
+  technicalSystem?: TechnicalSystem
+}
+
+export interface TechnicalCycle {
+  weekNumber: number
+  phase: TechnicalPhase
+  theme: string
+  tacticalTheme: string
+  grippingTheme?: string
+  stanceFocus?: 'RR' | 'RL' | 'LL'
+  acquisitionTargets: string[]    // technique IDs — new acquisition
+  reviewTargets: string[]         // technique IDs — consolidating
+  integratedTechniques: string[]  // technique IDs — fully integrated
+  sessionEmphasis: 'uchikomi' | 'nagekomi' | 'randori' | 'tactical' | 'mixed'
+  intensity: 1 | 2 | 3 | 4 | 5
+  volume: 1 | 2 | 3 | 4 | 5
+}
+
+export interface JudoSessionBlock {
+  title: string
+  duration: number    // minutes
+  description: string
+  drills: string[]
+  techniques: string[]
+  intensity: 1 | 2 | 3 | 4 | 5
+}
+
+export interface JudoSession {
+  id: string
+  planId: string
+  weekNumber: number
+  sessionNumber: number
+  date?: string
+  objective: string
+  technicalTheme: string
+  tacticalTheme: string
+  stanceFocus: 'RR' | 'RL' | 'LL'
+  warmup: JudoSessionBlock
+  technicalSection: JudoSessionBlock
+  tacticalDrills: JudoSessionBlock
+  situationalRandori: JudoSessionBlock
+  mainRandori: JudoSessionBlock
+  neWaza: JudoSessionBlock
+  cooldown: JudoSessionBlock
+  totalDuration: number
+  intensityLevel: 1 | 2 | 3 | 4 | 5
+  technicalLoad: 1 | 2 | 3 | 4 | 5
+  tacticalLoad: 1 | 2 | 3 | 4 | 5
+  generatedAt: string
 }

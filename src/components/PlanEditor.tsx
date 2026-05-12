@@ -5,12 +5,15 @@ import { WeekList } from './WeekList'
 import { WeekEditorModal } from './WeekEditorModal'
 import { RecommendationBanner } from './RecommendationBanner'
 import { SessionsView } from './SessionsView'
+import { TechnicalCalendar } from './TechnicalCalendar'
+import { JudoSessionsView } from './JudoSessionsView'
 import type { Week } from '../types'
 import { PHASE_LABELS, PHASE_COLORS, resolveAthleteEvents } from '../types'
 import { exportToExcel } from '../lib/excel'
 import { exportToPdf } from '../lib/pdf'
 import { runAllRules } from '../lib/rules'
-import { ArrowLeft, LayoutGrid, List, Download, FileSpreadsheet, ToggleLeft, ToggleRight, RefreshCw, Dumbbell } from 'lucide-react'
+import { generateTechnicalCycles } from '../lib/technicalPeriodization'
+import { ArrowLeft, LayoutGrid, List, Download, FileSpreadsheet, ToggleLeft, ToggleRight, RefreshCw, Dumbbell, Target, Swords } from 'lucide-react'
 
 interface Props {
   planId: string
@@ -85,14 +88,38 @@ const tabStyle = (active: boolean): React.CSSProperties => ({
 })
 
 export function PlanEditor({ planId, onBack }: Props) {
-  const { plans, athletes, globalEvents, updateWeek, updatePlanMode, regeneratePlan } = usePlanStore()
+  const {
+    plans, athletes, globalEvents, judoSessions,
+    updateWeek, updatePlanMode, regeneratePlan,
+    saveTechnicalCycles, generateAndSaveJudoSessions, deleteJudoSession,
+  } = usePlanStore()
   const plan = plans.find(p => p.id === planId)
   const athlete = plan ? athletes.find(a => a.id === plan.athleteId) : undefined
 
-  const [view, setView] = useState<'grid' | 'list' | 'sessions'>('list')
+  const [view, setView] = useState<'grid' | 'list' | 'sessions' | 'technical' | 'judo'>('list')
   const [editingWeek, setEditingWeek] = useState<number | null>(null)
   const [exporting, setExporting] = useState(false)
   const [confirmRegen, setConfirmRegen] = useState(false)
+
+  const planJudoSessions = useMemo(
+    () => judoSessions.filter(s => s.planId === planId),
+    [judoSessions, planId],
+  )
+  const technicalCycles = useMemo(() => {
+    if (plan?.technicalCycles && plan.technicalCycles.length > 0) return plan.technicalCycles
+    if (!plan) return []
+    // Fall back to a computed-on-the-fly preview if the plan hasn't persisted any.
+    return generateTechnicalCycles(plan.weeks, athlete?.technicalProfile)
+  }, [plan, athlete?.technicalProfile])
+
+  async function handleRegenerateTechnical() {
+    if (!plan) return
+    const cycles = generateTechnicalCycles(plan.weeks, athlete?.technicalProfile)
+    await saveTechnicalCycles(planId, cycles)
+  }
+  async function handleGenerateJudoSessions() {
+    await generateAndSaveJudoSessions(planId)
+  }
 
   const hasEvents = (athlete?.eventRefs?.length ?? 0) > 0
   const resolvedEvents = useMemo(
@@ -152,7 +179,7 @@ export function PlanEditor({ planId, onBack }: Props) {
           </div>
 
           {/* Center: view tabs */}
-          <div style={{ display: 'flex', background: 'rgba(255,255,255,0.05)', borderRadius: '0.5rem', padding: '0.2rem', gap: '0.1rem' }}>
+          <div style={{ display: 'flex', background: 'rgba(255,255,255,0.05)', borderRadius: '0.5rem', padding: '0.2rem', gap: '0.1rem', flexWrap: 'wrap' }}>
             <button onClick={() => setView('list')} style={tabStyle(view === 'list')}>
               <List size={13} /> Weekly Table
             </button>
@@ -161,6 +188,12 @@ export function PlanEditor({ planId, onBack }: Props) {
             </button>
             <button onClick={() => setView('sessions')} style={tabStyle(view === 'sessions')}>
               <Dumbbell size={13} /> Sessions
+            </button>
+            <button onClick={() => setView('technical')} style={tabStyle(view === 'technical')}>
+              <Target size={13} /> Technical
+            </button>
+            <button onClick={() => setView('judo')} style={tabStyle(view === 'judo')}>
+              <Swords size={13} /> Judo Sessions
             </button>
           </div>
 
@@ -217,26 +250,41 @@ export function PlanEditor({ planId, onBack }: Props) {
       <div className="max-w-7xl mx-auto px-4 py-6">
         <RecommendationBanner results={recommendations} />
 
-        {view === 'sessions'
-          ? <SessionsView plan={plan} athlete={athlete} />
-          : view === 'grid'
-            ? (
-              <div className="bg-white rounded-2xl border shadow-sm p-5" style={{ borderColor: 'var(--bc-border)' }}>
-                <YearGrid
-                  weeks={plan.weeks}
-                  planMode={plan.planMode}
-                  onEditWeek={setEditingWeek}
-                  athlete={athlete}
-                />
-              </div>
-            )
-            : <WeekList
-                weeks={plan.weeks}
-                planMode={plan.planMode}
-                onEditWeek={setEditingWeek}
-                athlete={athlete}
-              />
-        }
+        {view === 'sessions' ? (
+          <SessionsView plan={plan} athlete={athlete} />
+        ) : view === 'technical' ? (
+          <TechnicalCalendar
+            weeks={plan.weeks}
+            cycles={technicalCycles}
+            onRegenerateCycles={handleRegenerateTechnical}
+          />
+        ) : view === 'judo' ? (
+          <JudoSessionsView
+            sessions={planJudoSessions}
+            weeks={plan.weeks}
+            cycles={technicalCycles}
+            planId={planId}
+            profile={athlete?.technicalProfile}
+            onGenerate={handleGenerateJudoSessions}
+            onDeleteSession={deleteJudoSession}
+          />
+        ) : view === 'grid' ? (
+          <div className="bg-white rounded-2xl border shadow-sm p-5" style={{ borderColor: 'var(--bc-border)' }}>
+            <YearGrid
+              weeks={plan.weeks}
+              planMode={plan.planMode}
+              onEditWeek={setEditingWeek}
+              athlete={athlete}
+            />
+          </div>
+        ) : (
+          <WeekList
+            weeks={plan.weeks}
+            planMode={plan.planMode}
+            onEditWeek={setEditingWeek}
+            athlete={athlete}
+          />
+        )}
 
         {/* Phase summary cards */}
         <div className="mt-6 grid grid-cols-3 sm:grid-cols-6 gap-2">

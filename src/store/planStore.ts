@@ -1,11 +1,24 @@
 import { create } from 'zustand'
 import type { User } from '@supabase/supabase-js'
-import type { Athlete, YearlyPlan, Week, GlobalEvent, WeeklySchedule, GeneratedSession } from '../types'
+import type {
+  Athlete, YearlyPlan, Week, GlobalEvent, WeeklySchedule, GeneratedSession,
+  JudoSession, TechnicalCycle,
+} from '../types'
 import { resolveAthleteEvents } from '../types'
 import { generateWeeks, computePlanLength } from '../lib/dates'
 import { autoGenerateWeeks } from '../lib/autoplan'
+import { generateTechnicalCycles } from '../lib/technicalPeriodization'
+import { generateJudoSessions } from '../lib/judoSessionGen'
 import { format } from 'date-fns'
 import { supabase } from '../lib/supabase'
+
+// JudoSession records are persisted into the `generated_sessions` table with
+// a discriminator on the JSON payload (`kind: 'judo'`). Existing weight/cardio
+// sessions remain in the same table without the discriminator.
+type StoredJudoSession = JudoSession & { kind: 'judo' }
+function isStoredJudo(x: unknown): x is StoredJudoSession {
+  return !!x && typeof x === 'object' && (x as { kind?: string }).kind === 'judo'
+}
 
 // ---------------------------------------------------------------------------
 // Supabase helpers
@@ -29,7 +42,22 @@ async function fetchSchedules(userId: string): Promise<WeeklySchedule[]> {
 }
 async function fetchGeneratedSessions(userId: string): Promise<GeneratedSession[]> {
   const { data } = await supabase.from('generated_sessions').select('data').eq('user_id', userId)
-  return (data ?? []).map(r => r.data as GeneratedSession)
+  return (data ?? [])
+    .map(r => r.data as unknown)
+    .filter(d => !isStoredJudo(d))
+    .map(d => d as GeneratedSession)
+}
+async function fetchJudoSessions(userId: string): Promise<JudoSession[]> {
+  const { data } = await supabase.from('generated_sessions').select('data').eq('user_id', userId)
+  return (data ?? [])
+    .map(r => r.data as unknown)
+    .filter(isStoredJudo)
+    .map(d => {
+      // Strip the `kind` marker before returning to consumers.
+      const { kind: _k, ...session } = d
+      void _k
+      return session as JudoSession
+    })
 }
 
 // ---------------------------------------------------------------------------
@@ -44,6 +72,7 @@ interface PlanStore {
   globalEvents: GlobalEvent[]
   weeklySchedules: WeeklySchedule[]
   generatedSessions: GeneratedSession[]
+  judoSessions: JudoSession[]
   activePlanId: string | null
 
   init: () => void
@@ -58,6 +87,11 @@ interface PlanStore {
   deleteSchedule: (id: string) => Promise<void>
   saveGeneratedSession: (s: GeneratedSession) => Promise<void>
   deleteGeneratedSession: (id: string) => Promise<void>
+
+  saveJudoSession: (s: JudoSession) => Promise<void>
+  deleteJudoSession: (id: string) => Promise<void>
+  generateAndSaveJudoSessions: (planId: string) => Promise<void>
+  saveTechnicalCycles: (planId: string, cycles: TechnicalCycle[]) => Promise<void>
 
   createPlan: (athleteId: string, title: string, startDate: string, autoGenerate?: boolean) => Promise<string>
   regeneratePlan: (planId: string) => Promise<void>
@@ -81,6 +115,7 @@ export const usePlanStore = create<PlanStore>((set, get) => ({
   globalEvents: [],
   weeklySchedules: [],
   generatedSessions: [],
+  judoSessions: [],
   activePlanId: null,
 
   init() {
@@ -95,7 +130,7 @@ export const usePlanStore = create<PlanStore>((set, get) => ({
       const user = session?.user ?? null
       set({ user })
       if (user) get().loadAll(user.id)
-      else set({ athletes: [], plans: [], globalEvents: [], weeklySchedules: [], generatedSessions: [], loading: false })
+      else set({ athletes: [], plans: [], globalEvents: [], weeklySchedules: [], generatedSessions: [], judoSessions: [], loading: false })
     })
   },
 
@@ -105,14 +140,15 @@ export const usePlanStore = create<PlanStore>((set, get) => ({
 
   async loadAll(userId) {
     set({ loading: true })
-    const [athletes, plans, globalEvents, weeklySchedules, generatedSessions] = await Promise.all([
+    const [athletes, plans, globalEvents, weeklySchedules, generatedSessions, judoSessions] = await Promise.all([
       fetchAthletes(userId),
       fetchPlans(userId),
       fetchGlobalEvents(userId),
       fetchSchedules(userId),
       fetchGeneratedSessions(userId),
+      fetchJudoSessions(userId),
     ])
-    set({ athletes, plans, globalEvents, weeklySchedules, generatedSessions, loading: false })
+    set({ athletes, plans, globalEvents, weeklySchedules, generatedSessions, judoSessions, loading: false })
   },
 
   async saveAthlete(athlete) {
@@ -171,6 +207,70 @@ export const usePlanStore = create<PlanStore>((set, get) => ({
     if (!userId) return
     await supabase.from('generated_sessions').delete().eq('id', id).eq('user_id', userId)
     set({ generatedSessions: get().generatedSessions.filter(s => s.id !== id) })
+  },
+
+  async saveJudoSession(session) {
+    const userId = get().user?.id
+    if (!userId) return
+    const stored: StoredJudoSession = { ...session, kind: 'judo' }
+    await supabase.from('generated_sessions').upsert({
+      id: session.id, user_id: userId, plan_id: session.planId, data: stored,
+    })
+    set({ judoSessions: await fetchJudoSessions(userId) })
+  },
+
+  async deleteJudoSession(id) {
+    const userId = get().user?.id
+    if (!userId) return
+    await supabase.from('generated_sessions').delete().eq('id', id).eq('user_id', userId)
+    set({ judoSessions: get().judoSessions.filter(s => s.id !== id) })
+  },
+
+  async generateAndSaveJudoSessions(planId) {
+    const userId = get().user?.id
+    if (!userId) return
+    const plan = get().plans.find(p => p.id === planId)
+    if (!plan) return
+    const athlete = get().athletes.find(a => a.id === plan.athleteId)
+    const profile = athlete?.technicalProfile
+    const cycles = plan.technicalCycles ?? generateTechnicalCycles(plan.weeks, profile)
+
+    // Ensure cycles are persisted on the plan if newly generated.
+    if (!plan.technicalCycles) {
+      const updated: YearlyPlan = { ...plan, technicalCycles: cycles, updatedAt: format(new Date(), 'yyyy-MM-dd') }
+      await supabase.from('yearly_plans').update({ data: updated }).eq('id', planId).eq('user_id', userId)
+      set({ plans: get().plans.map(p => p.id === planId ? updated : p) })
+    }
+
+    const sessions = generateJudoSessions(plan.weeks, cycles, profile)
+      .map(s => ({ ...s, planId }))
+
+    // Wipe existing judo sessions for this plan before inserting fresh batch.
+    const existing = get().judoSessions.filter(s => s.planId === planId)
+    if (existing.length > 0) {
+      await supabase.from('generated_sessions').delete()
+        .in('id', existing.map(s => s.id))
+        .eq('user_id', userId)
+    }
+
+    const rows = sessions.map(s => ({
+      id: s.id, user_id: userId, plan_id: planId,
+      data: { ...s, kind: 'judo' } as StoredJudoSession,
+    }))
+    if (rows.length > 0) {
+      await supabase.from('generated_sessions').insert(rows)
+    }
+    set({ judoSessions: await fetchJudoSessions(userId) })
+  },
+
+  async saveTechnicalCycles(planId, cycles) {
+    const userId = get().user?.id
+    if (!userId) return
+    const plan = get().plans.find(p => p.id === planId)
+    if (!plan) return
+    const updated: YearlyPlan = { ...plan, technicalCycles: cycles, updatedAt: format(new Date(), 'yyyy-MM-dd') }
+    await supabase.from('yearly_plans').update({ data: updated }).eq('id', planId).eq('user_id', userId)
+    set({ plans: get().plans.map(p => p.id === planId ? updated : p) })
   },
 
   async createPlan(athleteId, title, startDate, autoGenerate = false) {
