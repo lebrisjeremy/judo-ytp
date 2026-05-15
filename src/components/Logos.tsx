@@ -6,10 +6,9 @@ export function JudoBCLogo({
   variant?: 'light' | 'dark'
   height?: number
 }) {
-  const fg  = variant === 'dark' ? '#ffffff' : '#0d0d0d'
-  const bg  = variant === 'dark' ? '#0d0d0d' : '#ffffff'
-  const dim = variant === 'dark' ? '#555555' : '#aaaaaa'
-  const w   = Math.round(height * 2.6)
+  const fg = variant === 'dark' ? '#ffffff' : '#0d0d0d'
+  const bg = variant === 'dark' ? '#0d0d0d' : '#ffffff'
+  const w  = Math.round(height * 3.4)
 
   const scallops = Array.from({ length: 16 }, (_, i) => {
     const a = (i / 16) * 2 * Math.PI - Math.PI / 2
@@ -17,26 +16,18 @@ export function JudoBCLogo({
   })
 
   return (
-    <svg width={w} height={height} viewBox="0 0 128 50" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <svg width={w} height={height} viewBox="0 0 170 50" fill="none" xmlns="http://www.w3.org/2000/svg">
       {/* Scalloped outer ring */}
       {scallops.map((p, i) => (
-        <circle key={i} cx={p.cx} cy={p.cy} r="2.9" fill={bg} stroke={fg} strokeWidth="1.2" />
+        <circle key={i} cx={p.cx} cy={p.cy} r="3.0" fill={bg} stroke={fg} strokeWidth="1.3" />
       ))}
       <circle cx="25" cy="25" r="21" stroke={fg} strokeWidth="1.8" fill={bg} />
-      <circle cx="25" cy="25" r="13.5" stroke={fg} strokeWidth="1" fill={bg} />
+      <circle cx="25" cy="25" r="13" stroke={fg} strokeWidth="0.9" fill={bg} />
       {/* Hinomaru — red circle */}
       <circle cx="25" cy="25" r="8.5" fill="#C0392B" />
-      {/* JUDO */}
-      <text x="54" y="20" fontFamily="'Bebas Neue', sans-serif" fontSize="15" letterSpacing="2.5" fill={fg}>
-        JUDO
-      </text>
-      {/* BC */}
-      <text x="52" y="41" fontFamily="'Bebas Neue', sans-serif" fontSize="23" letterSpacing="1.5" fill={fg}>
-        BC
-      </text>
-      {/* URL */}
-      <text x="54" y="48" fontFamily="'Courier New', monospace" fontSize="5.2" letterSpacing="0.4" fill={dim}>
-        www.judobc.ca
+      {/* JUDO BC — single horizontal line */}
+      <text x="57" y="36" fontFamily="'Bebas Neue', sans-serif" fontSize="25" letterSpacing="2" fill={fg}>
+        JUDO BC
       </text>
     </svg>
   )
